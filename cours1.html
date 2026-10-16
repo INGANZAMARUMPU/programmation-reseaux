@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmation Réseau — Jour 1 : Sockets TCP/UDP</title>
+<style>
+:root {
+    --primary: #1a2b4a;
+    --secondary: #4a5568;
+    --accent: #2c5282;
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --muted: #4a4a4a;
+    --border: #c8c8c8;
+    --code-bg: #f4f4f0;
+    --code-border: #d0d0c8;
+    --callout-bg: #fdfaf2;
+    --callout-border: #b8860b;
+    --info-bg: #f2f6fa;
+    --info-border: #2c5282;
+    --success-bg: #f2f8f3;
+    --success-border: #2f6b3a;
+    --danger-bg: #faf3f3;
+    --danger-border: #8b2c2c;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12pt;
+    line-height: 1.55;
+}
+header {
+    background: var(--primary);
+    color: #ffffff;
+    padding: 45px 25px 35px;
+    border-bottom: 3px solid #0f1a30;
+}
+.header-content { max-width: 1050px; margin: auto; }
+header h1 { font-size: 1.9rem; margin: 0 0 6px; font-weight: 700; }
+header h2 {
+    color: #d8e0ec; border: none; margin: 0 0 16px;
+    font-weight: 400; font-size: 1.15rem; font-style: italic;
+}
+header p { font-size: 1rem; max-width: 760px; color: #e8edf4; }
+.badge {
+    display: inline-block; background: transparent;
+    border: 1px solid #8fa3c0; padding: 3px 10px; border-radius: 2px;
+    margin: 3px 6px 3px 0; font-size: 0.75rem;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.6px; text-transform: uppercase; color: #d8e0ec;
+}
+nav {
+    position: sticky; top: 0; z-index: 100;
+    background: #0f1a30; border-bottom: 1px solid #2a3a55;
+}
+.nav-content {
+    max-width: 1050px; margin: auto;
+    display: flex; overflow-x: auto; gap: 0; padding: 4px 10px;
+}
+nav a {
+    color: #c8d4e4; text-decoration: none; padding: 9px 13px;
+    white-space: nowrap; font-size: 0.82rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+}
+nav a:hover { color: #ffffff; border-bottom-color: #8fa3c0; }
+main { max-width: 1050px; margin: auto; padding: 35px 20px; }
+section {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 28px 32px; margin-bottom: 24px;
+}
+h2 {
+    color: var(--primary); font-size: 1.35rem; font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin-top: 0; margin-bottom: 18px;
+}
+h3 {
+    color: #2a3a55; margin-top: 24px; margin-bottom: 8px;
+    font-weight: 700; font-size: 1.05rem;
+}
+h4 {
+    color: var(--accent); font-weight: 700;
+    margin-bottom: 6px; font-size: 1rem;
+}
+p { margin: 10px 0; }
+ul, ol { padding-left: 28px; }
+li { margin: 4px 0; }
+.callout {
+    padding: 16px 22px; margin: 15px 0; border-left: 3px solid;
+}
+.callout.objectifs { background: var(--info-bg); border-color: var(--info-border); }
+.callout.important { background: var(--callout-bg); border-color: var(--callout-border); }
+.callout.info { background: var(--info-bg); border-color: var(--info-border); }
+.callout.success { background: var(--success-bg); border-color: var(--success-border); }
+.callout.danger { background: var(--danger-bg); border-color: var(--danger-border); }
+pre {
+    background: var(--code-bg); color: #1a1a1a;
+    padding: 16px 20px; border: 1px solid var(--code-border);
+    overflow-x: auto;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.85rem; line-height: 1.45; margin: 14px 0;
+}
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eeeeea; color: #1a1a1a;
+    padding: 1px 5px; font-size: 0.88em; border: 1px solid #dcdcd6;
+}
+pre code { background: transparent; border: none; padding: 0; font-size: 0.85rem; }
+table {
+    width: 100%; border-collapse: collapse;
+    margin: 18px 0; font-size: 0.95rem;
+}
+th, td {
+    border: 1px solid var(--border); padding: 9px 12px;
+    text-align: left; vertical-align: top;
+}
+th { background: #eef1f5; color: #1a2b4a; font-weight: 700; }
+tr:nth-child(even) { background: #fafaf8; }
+.exercise {
+    border: 1px solid #a0a0a0; border-left: 3px solid var(--primary);
+    background: #fcfcfa; padding: 18px 22px; margin: 20px 0;
+}
+.level {
+    display: inline-block; padding: 2px 10px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;
+    border: 1px solid; margin-bottom: 8px;
+}
+.easy { background: #eef6ee; color: #2f6b3a; border-color: #2f6b3a; }
+.medium { background: #fdf8ee; color: #8a6508; border-color: #8a6508; }
+.hard { background: #f8eeee; color: #8b2c2c; border-color: #8b2c2c; }
+.schema {
+    margin: 20px 0 24px; border: 1px solid #b9c2cf;
+    background: #f8fafc; padding: 16px;
+}
+.schema h4 { margin-top: 0; }
+.schema canvas {
+    display: block; width: 100%; height: auto;
+    background: #101820; border: 1px solid #3c4652; margin: 8px 0;
+}
+.schema .caption {
+    margin: 8px 0 0; color: #4a5568;
+    font-size: .92rem; text-align: center;
+}
+footer {
+    background: #1a2b4a; color: #c8d4e4;
+    text-align: center; padding: 28px 20px; margin-top: 30px;
+    font-size: 0.85rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-top: 3px solid #0f1a30;
+}
+footer p { margin: 4px 0; }
+@media (max-width: 700px) {
+    header h1 { font-size: 1.4rem; }
+    header h2 { font-size: 1rem; }
+    section { padding: 20px 18px; }
+    pre { font-size: 0.78rem; }
+    h2 { font-size: 1.15rem; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-content">
+        <span class="badge">Programmation Réseau</span>
+        <span class="badge">Jour 1 / 11</span>
+        <span class="badge">Sockets</span>
+        <span class="badge">TCP / UDP</span>
+
+        <h1>Jour 1 — Sockets TCP et UDP</h1>
+        <h2>Le socle de la programmation réseau</h2>
+
+        <p>
+            Cette première journée introduit l'abstraction fondamentale
+            de toute communication entre programmes : la socket. Elle
+            couvre sa définition, le cycle de vie d'une connexion TCP,
+            l'API Python correspondante, la variante UDP, ainsi que les
+            mécanismes de gestion d'erreurs et de timeout.
+        </p>
+
+        <p>
+            <strong>Durée :</strong> 5 heures &nbsp;|&nbsp;
+            <strong>Prérequis :</strong> bases de Python (variables,
+            boucles, fonctions, exceptions), notions de modèles OSI
+            et TCP/IP
+        </p>
+    </div>
+</header>
+
+<nav>
+    <div class="nav-content">
+        <a href="#objectifs">Objectifs</a>
+        <a href="#socket">Socket</a>
+        <a href="#tcp">TCP</a>
+        <a href="#api">API Python</a>
+        <a href="#erreurs">Erreurs</a>
+        <a href="#udp">UDP</a>
+        <a href="#pieges">Pièges</a>
+        <a href="#tp1">TP1</a>
+        <a href="#tp2">TP2</a>
+        <a href="#tp3">TP3</a>
+        <a href="#tp4">TP4</a>
+        <a href="#bilan">Bilan</a>
+    </div>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     1. OBJECTIFS
+============================================================ -->
+<section id="objectifs">
+    <h2>1. Objectifs pédagogiques</h2>
+
+    <div class="callout objectifs">
+        <p>À l'issue de cette première journée, l'étudiant doit être capable de :</p>
+        <ul>
+            <li>définir la notion de <em>socket</em> et l'identifier par un couple <code>(adresse, port)</code> ;</li>
+            <li>distinguer les modèles TCP et UDP du point de vue du programmeur ;</li>
+            <li>décrire le cycle de vie d'une connexion TCP et les états d'une socket ;</li>
+            <li>utiliser l'API <code>socket</code> de Python pour écrire un client et un serveur, en TCP comme en UDP ;</li>
+            <li>manipuler des données binaires (<code>bytes</code>) et maîtriser l'encodage/décodage ;</li>
+            <li>comprendre la sémantique exacte de <code>send()</code>, <code>sendall()</code>, <code>recv()</code> et <code>recvfrom()</code> ;</li>
+            <li>gérer les erreurs réseau courantes (timeout, connexion refusée, fermeture, port occupé) ;</li>
+            <li>concevoir un format de message simple pour un protocole applicatif.</li>
+        </ul>
+    </div>
+
+    <h3>Organisation de la journée</h3>
+    <table>
+        <tr><th>Activité</th><th>Durée</th></tr>
+        <tr><td>Cours — Notion de socket, TCP, UDP</td><td>0 h 50</td></tr>
+        <tr><td>Cours — API Python : fonctions, encodage, sémantique</td><td>0 h 50</td></tr>
+        <tr><td>Cours — Erreurs, timeout, fermeture, UDP spécificités</td><td>0 h 40</td></tr>
+        <tr><td>TP1 — Écho TCP</td><td>0 h 40</td></tr>
+        <tr><td>TP2 — Robustesse et erreurs</td><td>0 h 40</td></tr>
+        <tr><td>TP3 — Écho UDP et perte de paquets</td><td>0 h 40</td></tr>
+        <tr><td>TP4 — Mini-protocole applicatif</td><td>0 h 30</td></tr>
+        <tr><td>Synthèse et questions</td><td>0 h 10</td></tr>
+    </table>
+</section>
+
+<!-- ============================================================
+     2. NOTION DE SOCKET
+============================================================ -->
+<section id="socket">
+    <h2>2. Notion de socket</h2>
+
+    <h3>2.1 — Définition</h3>
+
+    <p>
+        Une <strong>socket</strong> est une abstraction fournie par le
+        système d'exploitation qui représente une <strong>extrémité de
+        communication</strong> entre deux programmes. Elle est identifiée
+        par un triplet <code>(adresse IP, port, protocole de transport)</code>.
+    </p>
+
+    <p>
+        Du point de vue du programmeur, une socket est un objet sur lequel
+        on peut lire et écrire. Du point de vue du système, c'est une
+        structure de données interne associée à un descripteur de fichier.
+        Une même application peut ouvrir plusieurs sockets simultanément.
+    </p>
+
+    <div class="callout info">
+        <strong>Remarque —</strong> une socket n'est ni un câble, ni une
+        connexion. C'est une <strong>extrémité</strong>. Une connexion
+        TCP est identifiée par un couple de sockets (une par extrémité),
+        soit un quadruplet <code>(IP source, port source, IP destination,
+        port destination)</code>.
+    </div>
+
+    <h3>2.2 — Identifiants d'une socket</h3>
+
+    <table>
+        <tr><th>Élément</th><th>Rôle</th><th>Exemple</th></tr>
+        <tr>
+            <td>Adresse IP</td>
+            <td>Identifie la machine sur le réseau</td>
+            <td><code>192.168.1.10</code>, <code>127.0.0.1</code></td>
+        </tr>
+        <tr>
+            <td>Port</td>
+            <td>Identifie le processus sur la machine (16 bits, 0–65535)</td>
+            <td><code>80</code>, <code>443</code>, <code>9000</code></td>
+        </tr>
+        <tr>
+            <td>Protocole de transport</td>
+            <td>Détermine le mode de communication</td>
+            <td>TCP ou UDP</td>
+        </tr>
+    </table>
+
+    <p>
+        Le couple <code>(IP, port)</code> est unique à un instant donné
+        sur une machine, pour un protocole donné. Deux processus ne
+        peuvent pas écouter sur le même port avec le même protocole.
+        En revanche, TCP et UDP peuvent partager le même numéro de port
+        sans conflit : ils appartiennent à deux espaces distincts.
+    </p>
+
+    <h3>2.3 — Ports réservés et ports dynamiques</h3>
+
+    <table>
+        <tr><th>Plage</th><th>Nom</th><th>Usage</th></tr>
+        <tr><td>0 – 1023</td><td>Ports bien connus</td><td>Services standards (80, 443, 22…)</td></tr>
+        <tr><td>1024 – 49151</td><td>Ports enregistrés</td><td>Applications connues</td></tr>
+        <tr><td>49152 – 65535</td><td>Ports dynamiques</td><td>Alloués automatiquement côté client</td></tr>
+    </table>
+
+    <p>
+        Sous Linux, les ports inférieurs à 1024 nécessitent des privilèges
+        root. En pratique, on développe sur des ports supérieurs
+        (8000, 9000, etc.).
+    </p>
+
+    <h3>2.4 — Domaines d'adresses</h3>
+
+    <table>
+        <tr><th>Famille</th><th>Constante Python</th><th>Usage</th></tr>
+        <tr><td>IPv4</td><td><code>AF_INET</code></td><td>Adresses 32 bits — usage général</td></tr>
+        <tr><td>IPv6</td><td><code>AF_INET6</code></td><td>Adresses 128 bits — déploiement progressif</td></tr>
+        <tr><td>Unix local</td><td><code>AF_UNIX</code></td><td>Communication inter-processus sur une même machine</td></tr>
+    </table>
+
+    <h3>2.5 — Adresses particulières</h3>
+
+    <table>
+        <tr><th>Adresse</th><th>Signification</th></tr>
+        <tr><td><code>127.0.0.1</code></td><td>Boucle locale (loopback) — la machine elle-même</td></tr>
+        <tr><td><code>0.0.0.0</code></td><td>Toutes les interfaces — pour un serveur qui écoute partout</td></tr>
+        <tr><td><code>255.255.255.255</code></td><td>Diffusion limitée au réseau local</td></tr>
+    </table>
+
+    <div class="callout important">
+        <strong>À retenir —</strong> un serveur qui écoute sur
+        <code>0.0.0.0</code> accepte les connexions sur toutes ses
+        interfaces réseau (loopback, Ethernet, Wi-Fi…). Un serveur qui
+        écoute sur <code>127.0.0.1</code> n'accepte que les connexions
+        locales, ce qui est plus sûr en développement.
+    </div>
+</section>
+
+<!-- ============================================================
+     3. TCP
+============================================================ -->
+<section id="tcp">
+    <h2>3. TCP : le mode connecté</h2>
+
+    <h3>3.1 — Propriétés</h3>
+
+    <table>
+        <tr><th>Propriété</th><th>TCP</th></tr>
+        <tr><td>Type</td><td>Orienté connexion (flux d'octets)</td></tr>
+        <tr><td>Fiabilité</td><td>Garantie (retransmission, accusés de réception)</td></tr>
+        <tr><td>Ordre</td><td>Préservé</td></tr>
+        <tr><td>Frontières de message</td><td>Absentes — TCP est un flux continu</td></tr>
+        <tr><td>Contrôle de flux</td><td>Oui (fenêtre glissante)</td></tr>
+        <tr><td>Contrôle de congestion</td><td>Oui (slow start, congestion avoidance)</td></tr>
+        <tr><td>Constante Python</td><td><code>SOCK_STREAM</code></td></tr>
+    </table>
+
+    <h3>3.2 — Cycle de vie d'une connexion</h3>
+
+    <div class="schema">
+        <h4>Schéma 1 — Cycle de vie d'une connexion TCP</h4>
+        <canvas id="schemaHandshake" width="900" height="460"></canvas>
+        <p class="caption">
+            Ouverture en trois temps (SYN, SYN/ACK, ACK), échange de
+            données, puis fermeture négociée (FIN, ACK, FIN, ACK).
+        </p>
+    </div>
+
+    <p>
+        L'établissement d'une connexion TCP se fait en trois segments
+        (three-way handshake) :
+    </p>
+    <ol>
+        <li>Le client envoie un segment <code>SYN</code> (synchronisation) avec son numéro de séquence initial.</li>
+        <li>Le serveur répond par un <code>SYN/ACK</code> acquittant le SYN du client et proposant son propre numéro de séquence.</li>
+        <li>Le client confirme par un <code>ACK</code>.</li>
+    </ol>
+
+    <p>
+        La fermeture est également négociée, en quatre segments (chaque
+        extrémité ferme son propre sens de communication). Cette
+        symétrie explique l'apparition de l'état <code>TIME_WAIT</code>
+        côté client, qui persiste environ deux minutes après la fermeture.
+    </p>
+
+    <h3>3.3 — États d'une socket TCP</h3>
+
+    <div class="schema">
+        <h4>Schéma 2 — États d'une socket TCP (côté serveur)</h4>
+        <canvas id="schemaEtatsTCP" width="900" height="460"></canvas>
+        <p class="caption">
+            États principaux : CLOSED, LISTEN, SYN_RECEIVED, ESTABLISHED,
+            CLOSE_WAIT, LAST_ACK. Les transitions correspondent aux appels
+            système et aux segments reçus.
+        </p>
+    </div>
+
+    <p>
+        L'état <code>ESTABLISHED</code> est le seul où les données
+        circulent normalement. L'état <code>CLOSE_WAIT</code> indique
+        que le pair a fermé son côté, mais que l'application locale
+        n'a pas encore appelé <code>close()</code>.
+    </p>
+
+    <div class="callout important">
+        <strong>À retenir —</strong> côté serveur, l'ordre des appels
+        système est <code>socket → bind → listen → accept</code>.
+        Côté client : <code>socket → connect</code>.
+    </div>
+</section>
+
+<!-- ============================================================
+     4. API PYTHON
+============================================================ -->
+<section id="api">
+    <h2>4. API Python : le module <code>socket</code></h2>
+
+    <h3>4.1 — Fonctions principales</h3>
+
+    <table>
+        <tr><th>Appel</th><th>Rôle</th><th>Côté</th></tr>
+        <tr>
+            <td><code>socket.socket(famille, type)</code></td>
+            <td>Crée une socket</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>bind((ip, port))</code></td>
+            <td>Attache la socket à une adresse locale</td>
+            <td>Serveur</td>
+        </tr>
+        <tr>
+            <td><code>listen(n)</code></td>
+            <td>Met la socket en écoute, avec une file d'attente de <code>n</code> connexions</td>
+            <td>Serveur</td>
+        </tr>
+        <tr>
+            <td><code>accept()</code></td>
+            <td>Accepte une connexion, renvoie une <em>nouvelle</em> socket pour communiquer</td>
+            <td>Serveur</td>
+        </tr>
+        <tr>
+            <td><code>connect((ip, port))</code></td>
+            <td>Se connecte à un serveur</td>
+            <td>Client</td>
+        </tr>
+        <tr>
+            <td><code>send(data)</code></td>
+            <td>Envoie des octets — peut en envoyer moins que demandé</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>sendall(data)</code></td>
+            <td>Envoie tous les octets, ou lève une exception</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>recv(taille)</code></td>
+            <td>Reçoit jusqu'à <code>taille</code> octets</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>close()</code></td>
+            <td>Ferme la socket</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>settimeout(secondes)</code></td>
+            <td>Fixe un délai maximal sur les opérations bloquantes</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>setsockopt(niveau, option, valeur)</code></td>
+            <td>Configure une option de la socket</td>
+            <td>Client et serveur</td>
+        </tr>
+    </table>
+
+    <h3>4.2 — <code>send()</code> versus <code>sendall()</code></h3>
+
+    <p>
+        <code>send()</code> renvoie le nombre d'octets effectivement
+        envoyés, qui peut être inférieur à la taille demandée (notamment
+        si la mémoire tampon est pleine). <code>sendall()</code> boucle
+        en interne jusqu'à avoir tout envoyé.
+    </p>
+
+<pre><code># send() — nécessite une boucle si l'envoi est partiel
+total = 0
+while total &lt; len(donnees):
+    envoye = sock.send(donnees[total:])
+    total += envoye
+
+# sendall() — équivalent, mais géré par la bibliothèque
+sock.sendall(donnees)</code></pre>
+
+    <div class="callout important">
+        <strong>Recommandation —</strong> utiliser <code>sendall()</code>
+        dans presque tous les cas. <code>send()</code> ne se justifie
+        que pour un contrôle fin du débit.
+    </div>
+
+    <h3>4.3 — Données binaires et encodage</h3>
+
+    <p>
+        <code>send()</code> et <code>recv()</code> manipulent des
+        <code>bytes</code>, jamais des <code>str</code>. La conversion
+        se fait par <code>encode()</code> et <code>decode()</code>,
+        avec un encodage explicite (<code>utf-8</code> en général).
+    </p>
+
+<pre><code>message = "Bonjour"
+donnees = message.encode("utf-8")     # str → bytes
+texte   = donnees.decode("utf-8")     # bytes → str
+
+assert message == texte
+assert isinstance(donnees, bytes)</code></pre>
+
+    <p>
+        L'encodage par défaut de <code>encode()</code> est
+        <code>utf-8</code>, mais il vaut mieux le rendre explicite pour
+        éviter toute ambiguïté entre plateformes.
+    </p>
+
+    <h3>4.4 — Sémantique de <code>recv()</code></h3>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> <code>recv(n)</code> renvoie
+        <strong>jusqu'à</strong> <code>n</code> octets. TCP étant un
+        flux, il peut rendre moins que <code>n</code>, et il peut
+        fragmenter un envoi en plusieurs réceptions.
+    </div>
+
+    <p>
+        Deux conséquences pratiques :
+    </p>
+    <ul>
+        <li>un appel à <code>send()</code> ne correspond pas nécessairement
+            à un appel à <code>recv()</code> ;</li>
+        <li>pour lire une quantité fixe d'octets, il faut boucler
+            jusqu'à l'avoir obtenue.</li>
+    </ul>
+
+<pre><code>def recv_exact(sock, n):
+    """Lit exactement n octets, ou lève une erreur si la connexion se ferme."""
+    donnees = b""
+    while len(donnees) &lt; n:
+        morceau = sock.recv(n - len(donnees))
+        if not morceau:
+            raise ConnectionError("connexion fermée avant réception complète")
+        donnees += morceau
+    return donnees</code></pre>
+
+    <h3>4.5 — Détection de fermeture</h3>
+
+    <p>
+        <code>recv()</code> qui renvoie <code>b""</code> signale que le
+        pair a fermé la connexion. C'est la méthode canonique de
+        détection, et elle ne lève pas d'exception.
+    </p>
+
+<pre><code>data = sock.recv(1024)
+if data == b"":
+    print("connexion fermée par le pair")</code></pre>
+
+    <h3>4.6 — Timeout</h3>
+
+    <p>
+        Par défaut, les opérations bloquantes (<code>accept()</code>,
+        <code>recv()</code>) attendent indéfiniment. On fixe un délai
+        maximal avec <code>settimeout()</code>.
+    </p>
+
+<pre><code>sock.settimeout(5.0)   # 5 secondes
+
+try:
+    data = sock.recv(1024)
+except socket.timeout:
+    print("délai dépassé")</code></pre>
+
+    <p>
+        <code>settimeout(None)</code> rétablit le mode bloquant. Un
+        timeout de <code>0</code> place la socket en mode non bloquant.
+    </p>
+
+    <h3>4.7 — Réutilisation d'adresse : <code>SO_REUSEADDR</code></h3>
+
+    <p>
+        Après la fermeture d'un serveur, le port reste dans l'état
+        <code>TIME_WAIT</code> pendant environ deux minutes. Tenter
+        de relancer le serveur immédiatement échoue avec
+        <code>OSError: Address already in use</code>.
+    </p>
+
+<pre><code>srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+srv.bind(("0.0.0.0", 9000))</code></pre>
+
+    <p>
+        Cette option autorise la réutilisation immédiate d'une adresse
+        locale en <code>TIME_WAIT</code>. Elle est indispensable en
+        développement.
+    </p>
+
+    <h3>4.8 — Exemple complet : serveur et client TCP</h3>
+
+    <p>
+        Ce couple d'exemples illustre l'ensemble des notions ci-dessus.
+        Il servira de référence pour les TP.
+    </p>
+
+    <h4>Serveur</h4>
+<pre><code>import socket
+
+srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+srv.bind(("0.0.0.0", 9000))
+srv.listen(5)
+print("[serveur] écoute sur 9000")
+
+conn, addr = srv.accept()
+conn.settimeout(10)
+print(f"[serveur] client {addr}")
+
+while True:
+    data = conn.recv(1024)
+    if not data:                       # b"" : client déconnecté
+        print("[serveur] client déconnecté")
+        break
+    print(f"[serveur] reçu {len(data)} octets")
+    conn.sendall(data)
+
+conn.close()
+srv.close()</code></pre>
+
+    <h4>Client</h4>
+<pre><code>import socket
+
+cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+cli.settimeout(5)
+cli.connect(("127.0.0.1", 9000))
+print("[client] connecté")
+
+message = "Bonjour serveur"
+cli.sendall(message.encode("utf-8"))
+
+reponse = cli.recv(1024)
+if reponse == b"":
+    print("[client] connexion fermée")
+else:
+    print(f"[client] réponse : {reponse.decode('utf-8')}")
+
+cli.close()</code></pre>
+</section>
+
+<!-- ============================================================
+     5. ERREURS RESEAU
+============================================================ -->
+<section id="erreurs">
+    <h2>5. Erreurs réseau courantes</h2>
+
+    <p>
+        Un programme réseau doit anticiper les erreurs. Contrairement à
+        un programme local, il dépend d'un environnement non maîtrisé :
+        le réseau, l'autre machine, la disponibilité du service.
+    </p>
+
+    <h3>5.1 — Catalogue des erreurs</h3>
+
+    <table>
+        <tr><th>Erreur</th><th>Cause</th><th>Remède</th></tr>
+        <tr>
+            <td><code>ConnectionRefusedError</code></td>
+            <td>Serveur non lancé, port erroné, ou rejet explicite</td>
+            <td>Vérifier l'état du serveur, le port</td>
+        </tr>
+        <tr>
+            <td><code>TimeoutError</code> / <code>socket.timeout</code></td>
+            <td>Pas de réponse dans le délai imparti</td>
+            <td><code>settimeout()</code>, <code>try/except</code></td>
+        </tr>
+        <tr>
+            <td><code>OSError: Address already in use</code></td>
+            <td>Port encore occupé (état <code>TIME_WAIT</code>)</td>
+            <td><code>setsockopt(SO_REUSEADDR, 1)</code></td>
+        </tr>
+        <tr>
+            <td><code>ConnectionResetError</code></td>
+            <td>Fermeture brutale par le pair (RST)</td>
+            <td>Gérer dans <code>try/except</code>, fermer proprement</td>
+        </tr>
+        <tr>
+            <td><code>BrokenPipeError</code></td>
+            <td>Écriture sur une connexion déjà fermée</td>
+            <td>Détecter <code>recv() == b""</code> avant d'écrire</td>
+        </tr>
+        <tr>
+            <td><code>OSError: [Errno 101] Network is unreachable</code></td>
+            <td>Route absente vers la destination</td>
+            <td>Vérifier la configuration réseau</td>
+        </tr>
+        <tr>
+            <td><code>socket.gaierror</code></td>
+            <td>Échec de résolution de nom (DNS)</td>
+            <td>Vérifier le nom, la connexion DNS</td>
+        </tr>
+    </table>
+
+    <h3>5.2 — Structure canonique d'un serveur robuste</h3>
+
+<pre><code>import socket
+
+srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+srv.bind(("0.0.0.0", 9000))
+srv.listen(5)
+
+try:
+    conn, addr = srv.accept()
+    conn.settimeout(10)
+
+    while True:
+        try:
+            data = conn.recv(1024)
+        except socket.timeout:
+            print("timeout sur recv()")
+            break
+
+        if not data:
+            break
+
+        try:
+            conn.sendall(data)
+        except BrokenPipeError:
+            print("le pair a fermé la connexion")
+            break
+
+except ConnectionResetError:
+    print("connexion réinitialisée par le pair")
+finally:
+    try: conn.close()
+    except NameError: pass
+    srv.close()</code></pre>
+
+    <p>
+        Le bloc <code>finally</code> garantit la libération des
+        ressources, même en cas d'erreur. Le <code>try/except NameError</code>
+        protège le cas où <code>accept()</code> aurait échoué avant
+        l'affectation de <code>conn</code>.
+    </p>
+</section>
+
+<!-- ============================================================
+     6. UDP
+============================================================ -->
+<section id="udp">
+    <h2>6. UDP : le mode non connecté</h2>
+
+    <h3>6.1 — Propriétés</h3>
+
+    <table>
+        <tr><th>Propriété</th><th>UDP</th></tr>
+        <tr><td>Type</td><td>Non connecté (datagrammes)</td></tr>
+        <tr><td>Fiabilité</td><td>Aucune garantie</td></tr>
+        <tr><td>Ordre</td><td>Non préservé</td></tr>
+        <tr><td>Frontières de message</td><td>Présentes — un envoi = un datagramme</td></tr>
+        <tr><td>Contrôle de flux</td><td>Non</td></tr>
+        <tr><td>Contrôle de congestion</td><td>Non</td></tr>
+        <tr><td>Constante Python</td><td><code>SOCK_DGRAM</code></td></tr>
+    </table>
+
+    <h3>6.2 — API spécifique</h3>
+
+    <table>
+        <tr><th>Appel</th><th>Rôle</th></tr>
+        <tr><td><code>sendto(data, (ip, port))</code></td><td>Envoie un datagramme à une adresse</td></tr>
+        <tr><td><code>recvfrom(taille)</code></td><td>Reçoit un datagramme et l'adresse de l'expéditeur</td></tr>
+    </table>
+
+    <p>
+        UDP ne comporte ni <code>listen()</code>, ni <code>accept()</code>.
+        La socket serveur est simplement attachée à un port par
+        <code>bind()</code>. <code>connect()</code> existe mais reste
+        optionnel : il ne fait que fixer l'adresse par défaut d'envoi.
+    </p>
+
+    <h3>6.3 — Exemple complet : serveur et client UDP</h3>
+
+    <h4>Serveur UDP</h4>
+<pre><code>import socket
+
+srv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+srv.bind(("0.0.0.0", 9001))
+print("[serveur UDP] écoute sur 9001")
+
+while True:
+    data, addr = srv.recvfrom(1024)
+    print(f"[serveur UDP] {addr} : {data!r}")
+    srv.sendto(data, addr)</code></pre>
+
+    <h4>Client UDP</h4>
+<pre><code>import socket
+
+cli = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+cli.settimeout(3)
+
+message = "ping UDP"
+cli.sendto(message.encode("utf-8"), ("127.0.0.1", 9001))
+
+try:
+    reponse, _ = cli.recvfrom(1024)
+    print(f"[client UDP] réponse : {reponse.decode('utf-8')}")
+except socket.timeout:
+    print("[client UDP] pas de réponse")
+
+cli.close()</code></pre>
+
+    <h3>6.4 — Différences fondamentales TCP / UDP</h3>
+
+    <table>
+        <tr><th>Critère</th><th>TCP</th><th>UDP</th></tr>
+        <tr><td>Établissement</td><td>Oui (handshake)</td><td>Non</td></tr>
+        <tr><td>Envoi</td><td><code>send</code>, <code>sendall</code></td><td><code>sendto</code></td></tr>
+        <tr><td>Réception</td><td><code>recv</code></td><td><code>recvfrom</code></td></tr>
+        <tr><td>Frontières</td><td>Non</td><td>Oui</td></tr>
+        <tr><td>Détection de perte</td><td>Automatique</td><td>Aucune</td></tr>
+        <tr><td>Signalement de fermeture</td><td><code>recv() == b""</code></td><td>Impossible à détecter</td></tr>
+        <tr><td>Cas d'usage</td><td>HTTP, SSH, transfert de fichiers</td><td>DNS, VoIP, jeux, streaming</td></tr>
+    </table>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> en UDP, l'absence de réponse n'est
+        pas détectable par le protocole. Si un datagramme est perdu,
+        l'application attend indéfiniment. Seul un timeout applicatif
+        permet de détecter la perte.
+    </div>
+
+    <h3>6.5 — Taille d'un datagramme</h3>
+
+    <p>
+        La taille maximale d'un datagramme UDP est théoriquement de
+        65507 octets (limite du protocole IP). En pratique, on dépasse
+        rarement 1472 octets (MTU Ethernet 1500 – en-têtes IP et UDP).
+        Au-delà, la fragmentation IP dégrade les performances et
+        augmente les risques de perte.
+    </p>
+</section>
+
+<!-- ============================================================
+     7. PIEGES ET ERREURS COURANTES
+============================================================ -->
+<section id="pieges">
+    <h2>7. Pièges et erreurs courantes</h2>
+
+    <p>
+        Cette section recense les erreurs les plus fréquentes
+        rencontrées par les étudiants lors de l'écriture de programmes
+        réseau. Chaque piège est présenté sous la forme
+        <em>symptôme → cause → remède</em>.
+    </p>
+
+    <h3>7.1 — Piège : oublier d'encoder avant <code>send()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>TypeError: a bytes-like object is required, not 'str'</code>.
+        <p>
+            <strong>Cause —</strong> <code>send()</code> et
+            <code>sendall()</code> n'acceptent que des <code>bytes</code>.
+            Un <code>str</code> ne passe pas.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>data.encode("utf-8")</code>
+            avant l'envoi, <code>data.decode("utf-8")</code> après la
+            réception.
+        </p>
+    </div>
+
+    <h3>7.2 — Piège : croire que <code>recv(n)</code> renvoie <code>n</code> octets</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un message long arrive tronqué,
+        ou une partie du message suivant est collée au premier.
+        <p>
+            <strong>Cause —</strong> TCP est un flux. <code>recv(n)</code>
+            renvoie <em>jusqu'à</em> <code>n</code> octets, pas
+            exactement <code>n</code>.
+        </p>
+        <p>
+            <strong>Remède —</strong> boucler jusqu'à avoir la quantité
+            désirée, ou utiliser un délimiteur de message, ou préfixer
+            par une longueur.
+        </p>
+    </div>
+
+    <h3>7.3 — Piège : confondre <code>accept()</code> et la socket de communication</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le serveur ne peut pas accepter un
+        second client.
+        <p>
+            <strong>Cause —</strong> <code>accept()</code> renvoie
+            <strong>une nouvelle socket</strong> dédiée à la communication.
+            La socket d'écoute reste disponible pour d'autres
+            <code>accept()</code>. Utiliser la socket d'écoute pour
+            <code>recv()</code> est une erreur.
+        </p>
+        <p>
+            <strong>Remède —</strong> bien distinguer <code>srv</code>
+            (écoute) et <code>conn</code> (communication).
+        </p>
+    </div>
+
+    <h3>7.4 — Piège : oublier <code>SO_REUSEADDR</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>OSError: [Errno 98] Address already in use</code> au
+        redémarrage du serveur.
+        <p>
+            <strong>Cause —</strong> le port est encore en
+            <code>TIME_WAIT</code> après la fermeture.
+        </p>
+        <p>
+            <strong>Remède —</strong> appeler
+            <code>setsockopt(SO_REUSEADDR, 1)</code> avant <code>bind()</code>.
+        </p>
+    </div>
+
+    <h3>7.5 — Piège : ne pas gérer la fermeture</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> boucle infinie dans le serveur,
+        ou exception <code>BrokenPipeError</code> lors d'un envoi.
+        <p>
+            <strong>Cause —</strong> <code>recv()</code> qui renvoie
+            <code>b""</code> n'est pas détecté, ou on écrit sur une
+            socket fermée.
+        </p>
+        <p>
+            <strong>Remède —</strong> tester <code>if not data: break</code>
+            après chaque <code>recv()</code>. Envelopper les envois
+            dans un <code>try/except BrokenPipeError</code>.
+        </p>
+    </div>
+
+    <h3>7.6 — Piège : bloquer indéfiniment sur <code>recv()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le programme ne répond plus,
+        impossible de l'interrompre proprement.
+        <p>
+            <strong>Cause —</strong> <code>recv()</code> sans timeout
+            attend indéfiniment.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>settimeout(N)</code> et
+            gérer <code>socket.timeout</code> dans un <code>try/except</code>.
+        </p>
+    </div>
+
+    <h3>7.7 — Piège : croire qu'UDP signale les pertes</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le client UDP attend indéfiniment
+        alors que le serveur n'est pas lancé.
+        <p>
+            <strong>Cause —</strong> UDP n'a aucun mécanisme de retour.
+            Un datagramme vers un port fermé génère un message ICMP
+            <em>port unreachable</em>, mais celui-ci n'est pas remonté
+            à l'application par défaut.
+        </p>
+        <p>
+            <strong>Remède —</strong> prévoir un timeout applicatif et
+            une stratégie de retransmission si nécessaire.
+        </p>
+    </div>
+
+    <h3>7.8 — Piège : confondre <code>send()</code> et <code>sendall()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un gros message est tronqué, sans
+        erreur apparente.
+        <p>
+            <strong>Cause —</strong> <code>send()</code> peut envoyer
+            moins que demandé. Ignorer la valeur de retour conduit à
+            une perte silencieuse.
+        </p>
+        <p>
+            <strong>Remède —</strong> utiliser <code>sendall()</code>.
+        </p>
+    </div>
+
+    <h3>7.9 — Piège : réutiliser une socket fermée</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>OSError: [Errno 9] Bad file descriptor</code>.
+        <p>
+            <strong>Cause —</strong> une socket fermée ne peut plus
+            être utilisée. Elle doit être recréée.
+        </p>
+        <p>
+            <strong>Remède —</strong> vérifier le cycle de vie. En cas
+            de reconnexion, créer une nouvelle socket.
+        </p>
+    </div>
+
+    <h3>7.10 — Piège : <code>recv()</code> avec une taille trop petite</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> les messages longs sont tronqués.
+        <p>
+            <strong>Cause —</strong> <code>recv(10)</code> ne lit que
+            10 octets au maximum, le reste reste dans le tampon.
+        </p>
+        <p>
+            <strong>Remède —</strong> dimensionner le tampon en fonction
+            du protocole, ou boucler jusqu'à épuisement.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     8. TP1
+============================================================ -->
+<section id="tp1">
+    <h2>8. TP 1 — Client et serveur d'écho TCP</h2>
+
+    <div class="exercise">
+        <span class="level easy">Facile</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Écrire un serveur TCP qui renvoie tel quel tout message
+            reçu, et un client qui envoie un message puis affiche la
+            réponse. Ce TP met en œuvre les notions des sections 4.1
+            à 4.8.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur — <code>serveur_echo.py</code></h4>
+        <ul>
+            <li>Créer une socket TCP (<code>AF_INET</code>, <code>SOCK_STREAM</code>).</li>
+            <li>Activer <code>SO_REUSEADDR</code>.</li>
+            <li>Attacher la socket au port <code>9000</code> sur toutes les interfaces.</li>
+            <li>Se mettre en écoute avec une file d'attente de 5 connexions.</li>
+            <li>Accepter une connexion, afficher l'adresse du client.</li>
+            <li>Recevoir un message, l'afficher, le renvoyer à l'identique.</li>
+            <li>Fermer proprement les deux sockets.</li>
+        </ul>
+
+        <h4>Client — <code>client_echo.py</code></h4>
+        <ul>
+            <li>Créer une socket TCP.</li>
+            <li>Se connecter à <code>127.0.0.1:9000</code>.</li>
+            <li>Envoyer la chaîne <code>"Bonjour serveur"</code>.</li>
+            <li>Recevoir la réponse, l'afficher.</li>
+            <li>Fermer la socket.</li>
+        </ul>
+
+        <h3>Exécution</h3>
+<pre><code># Terminal 1
+python serveur_echo.py
+
+# Terminal 2
+python client_echo.py</code></pre>
+
+        <h3>Observation Wireshark</h3>
+        <p>
+            Lancer une capture sur l'interface de bouclage
+            (<code>lo</code> ou <code>Loopback</code>) avec le filtre
+            <code>tcp.port == 9000</code>. Identifier :
+        </p>
+        <ul>
+            <li>les trois segments de la poignée de main (<code>SYN</code>, <code>SYN/ACK</code>, <code>ACK</code>) ;</li>
+            <li>le segment contenant <code>"Bonjour serveur"</code> ;</li>
+            <li>le segment contenant l'écho ;</li>
+            <li>les segments de fermeture (<code>FIN</code>, <code>ACK</code>).</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Le message <code>"Bonjour serveur"</code> fait 15 caractères.
+            Combien de segments TCP ont été nécessaires pour le
+            transporter ? Pourquoi ce nombre ne correspond-il pas
+            exactement à un envoi / une réception dans le code ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     9. TP2
+============================================================ -->
+<section id="tp2">
+    <h2>9. TP 2 — Robustesse et gestion des erreurs</h2>
+
+    <div class="exercise">
+        <span class="level medium">Moyen</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Reprendre le TP1 et le rendre tolérant aux erreurs réseau
+            décrites en section 5. L'objectif est qu'aucune situation
+            anormale ne provoque un crash.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur</h4>
+        <ul>
+            <li>Timeout de 10 secondes sur <code>recv()</code>.</li>
+            <li>Boucle de lecture jusqu'à ce que le client ferme
+                (<code>recv() == b""</code>).</li>
+            <li>Gestion explicite de <code>socket.timeout</code> et
+                <code>ConnectionResetError</code>.</li>
+            <li>Bloc <code>finally</code> garantissant la fermeture
+                des sockets.</li>
+        </ul>
+
+        <h4>Client</h4>
+        <ul>
+            <li>Timeout de 5 secondes sur <code>connect()</code> et
+                <code>recv()</code>.</li>
+            <li>Gestion de <code>ConnectionRefusedError</code> et
+                <code>socket.timeout</code>.</li>
+            <li>Message d'erreur explicite en cas d'échec.</li>
+        </ul>
+
+        <h3>Expériences à mener</h3>
+        <ol>
+            <li>Lancer le client sans le serveur. Observer le message
+                d'erreur produit.</li>
+            <li>Lancer le serveur, puis interrompre le client en pleine
+                communication (Ctrl+C). Observer le comportement du
+                serveur.</li>
+            <li>Relancer immédiatement le serveur. Vérifier que
+                <code>SO_REUSEADDR</code> évite l'erreur de port occupé.</li>
+            <li>Modifier le client pour qu'il envoie un message puis
+                attende 20 secondes. Observer le timeout côté serveur.</li>
+        </ol>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi le bloc <code>finally</code> est-il indispensable
+            pour la fermeture des sockets ? Que se passerait-il si
+            une exception survenait avant <code>close()</code> ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     10. TP3
+============================================================ -->
+<section id="tp3">
+    <h2>10. TP 3 — Écho UDP et perte de paquets</h2>
+
+    <div class="exercise">
+        <span class="level medium">Moyen</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Écrire un serveur et un client UDP, puis observer
+            expérimentalement l'absence de retour en cas de perte de
+            paquet. Ce TP met en œuvre les notions de la section 6.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur UDP — <code>serveur_udp.py</code></h4>
+        <ul>
+            <li>Créer une socket UDP (<code>SOCK_DGRAM</code>).</li>
+            <li>Attacher la socket au port <code>9001</code>.</li>
+            <li>Boucler indéfiniment : recevoir un datagramme, afficher
+                l'adresse de l'expéditeur et le contenu, renvoyer le
+                datagramme à l'expéditeur.</li>
+            <li>Le serveur ne s'arrête jamais (arrêt par Ctrl+C).</li>
+        </ul>
+
+        <h4>Client UDP — <code>client_udp.py</code></h4>
+        <ul>
+            <li>Créer une socket UDP.</li>
+            <li>Fixer un timeout de 3 secondes.</li>
+            <li>Envoyer <code>"ping UDP"</code> à <code>127.0.0.1:9001</code>.</li>
+            <li>Attendre la réponse, l'afficher, ou afficher
+                <code>"pas de réponse"</code> en cas de timeout.</li>
+        </ul>
+
+        <h3>Expériences à mener</h3>
+        <ol>
+            <li>Lancer le serveur puis le client. Vérifier la réponse.</li>
+            <li>Arrêter le serveur UDP, relancer le client. Observer
+                l'absence de <code>ConnectionRefusedError</code> et le
+                déclenchement du timeout. Comparer avec TCP.</li>
+            <li>Modifier le serveur pour ignorer un message sur deux
+                (à l'aide d'un compteur). Relancer le client plusieurs
+                fois. Observer les cas de non-réponse.</li>
+            <li>Ajouter au client une boucle d'envoi de 10 messages
+                consécutifs et compter combien de réponses sont
+                reçues. Conclure.</li>
+        </ol>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            En UDP, comment un programme peut-il savoir qu'un
+            datagramme a été perdu ? Quelles stratégies peut-on mettre
+            en place au niveau applicatif pour pallier cette absence
+            de signalement ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     11. TP4
+============================================================ -->
+<section id="tp4">
+    <h2>11. TP 4 — Mini-protocole applicatif</h2>
+
+    <div class="exercise">
+        <span class="level hard">Difficile</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Concevoir et implémenter un protocole applicatif simple :
+            un serveur de calcul qui reçoit des opérations et renvoie
+            le résultat ou un message d'erreur. Ce TP mobilise
+            l'ensemble des notions de la journée.
+        </p>
+
+        <h3>Spécification du protocole</h3>
+
+        <table>
+            <tr><th>Requête</th><th>Réponse attendue</th></tr>
+            <tr><td><code>add 3 5</code></td><td><code>8</code></td></tr>
+            <tr><td><code>sub 10 4</code></td><td><code>6</code></td></tr>
+            <tr><td><code>mul 6 7</code></td><td><code>42</code></td></tr>
+            <tr><td><code>div 10 0</code></td><td><code>ERROR division par zéro</code></td></tr>
+            <tr><td><code>add 3</code></td><td><code>ERROR format invalide</code></td></tr>
+            <tr><td><code>foo 1 2</code></td><td><code>ERROR opération inconnue</code></td></tr>
+        </table>
+
+        <p>
+            Les messages sont encodés en UTF-8. Chaque requête tient
+            sur une ligne terminée par un saut de ligne. Le serveur
+            répond par une ligne, terminée également par un saut de
+            ligne.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur TCP — <code>serveur_calc.py</code></h4>
+        <ul>
+            <li>Écouter sur le port <code>9002</code>.</li>
+            <li>Accepter une connexion, puis traiter les requêtes
+                successives jusqu'à fermeture par le client.</li>
+            <li>Pour chaque requête : décoder, analyser
+                (<code>split()</code>), exécuter l'opération,
+                produire une réponse.</li>
+            <li>Gérer les erreurs de format et les opérations
+                inconnues.</li>
+            <li>Utiliser <code>SO_REUSEADDR</code> et un timeout.</li>
+        </ul>
+
+        <h4>Client TCP — <code>client_calc.py</code></h4>
+        <ul>
+            <li>Se connecter à <code>127.0.0.1:9002</code>.</li>
+            <li>Boucler : lire une ligne au clavier, l'envoyer,
+                attendre la réponse, l'afficher.</li>
+            <li>Quitter sur la commande <code>quit</code>.</li>
+        </ul>
+
+        <h3>Extensions</h3>
+        <ul>
+            <li>Accepter des nombres flottants.</li>
+            <li>Ajouter l'opération <code>pow</code>.</li>
+            <li>Reprendre le même protocole en UDP et comparer le
+                comportement en cas de perte.</li>
+            <li>Ajouter un compteur de requêtes traitées côté serveur.</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Le protocole est ici textuel, avec des messages séparés par
+            des sauts de ligne. Quels sont les avantages et les
+            inconvénients de ce choix par rapport à un format binaire
+            avec un champ de longueur explicite ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     12. BILAN
+============================================================ -->
+<section id="bilan">
+    <h2>12. À retenir — Jour 1</h2>
+
+    <div class="callout success">
+        <ul>
+            <li>Une socket est une extrémité de communication identifiée
+                par un triplet <code>(adresse IP, port, protocole)</code>.</li>
+            <li>TCP est connecté, fiable, ordonné, sans frontières de
+                message. UDP est non connecté, non fiable, avec
+                frontières de message.</li>
+            <li>Côté serveur TCP : <code>socket → bind → listen → accept</code>.
+                Côté client TCP : <code>socket → connect</code>.</li>
+            <li>Côté serveur UDP : <code>socket → bind</code>. Côté
+                client UDP : <code>socket</code> seul.</li>
+            <li><code>send()</code> et <code>recv()</code> manipulent
+                des <code>bytes</code>. Conversion par
+                <code>encode()</code> et <code>decode()</code>.</li>
+            <li><code>sendall()</code> est préférable à
+                <code>send()</code> : il garantit l'envoi complet ou
+                lève une exception.</li>
+            <li><code>recv()</code> peut renvoyer moins que la taille
+                demandée. Pour lire une quantité fixe, boucler.</li>
+            <li><code>recv() == b""</code> signale la fermeture de la
+                connexion par le pair.</li>
+            <li>Prévoir systématiquement <code>settimeout()</code>,
+                <code>try/except</code> et <code>finally: close()</code>.</li>
+            <li><code>SO_REUSEADDR</code> évite l'erreur de port occupé
+                au redémarrage.</li>
+            <li>UDP ne signale pas les pertes : seul un timeout côté
+                application permet de les détecter.</li>
+            <li><code>accept()</code> renvoie une <em>nouvelle</em>
+                socket, distincte de la socket d'écoute.</li>
+        </ul>
+    </div>
+
+    <h3>Travail à remettre pour le Jour 1</h3>
+
+    <p>Chaque étudiant remet un répertoire organisé comme suit :</p>
+
+<pre><code>jour1/
+│
+├── serveur_echo.py
+├── client_echo.py
+├── serveur_udp.py
+├── client_udp.py
+└── serveur_calc.py
+└── client_calc.py</code></pre>
+
+    <p>L'ensemble doit :</p>
+    <ul>
+        <li>gérer les erreurs réseau sans planter ;</li>
+        <li>utiliser <code>SO_REUSEADDR</code> côté serveur ;</li>
+        <li>implémenter le mini-protocole de calcul du TP 4 ;</li>
+        <li>respecter les timeouts spécifiés dans chaque TP.</li>
+    </ul>
+</section>
+
+</main>
+
+<footer>
+    <p><strong>Programmation Réseau — Jour 1</strong></p>
+    <p>Sockets TCP et UDP</p>
+    <p>Python · Wireshark</p>
+</footer>
+
+<!-- ============================================================
+     SCHÉMAS CANVAS
+============================================================ -->
+<script>
+(function () {
+    "use strict";
+
+    function setup(id) {
+        const c = document.getElementById(id);
+        if (!c) return null;
+        return { c, ctx: c.getContext("2d"), w: c.width, h: c.height };
+    }
+
+    function fond(ctx, w, h) {
+        ctx.fillStyle = "#101820";
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    /* ---------- Schéma Handshake TCP ---------- */
+    const sH = setup("schemaHandshake");
+    if (sH) {
+        const { ctx, w, h } = sH;
+        fond(ctx, w, h);
+
+        const clientX = 150;
+        const serveurX = w - 150;
+
+        // Lignes de vie
+        ctx.strokeStyle = "#8fa3c0";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(clientX, 55);  ctx.lineTo(clientX, h - 30);
+        ctx.moveTo(serveurX, 55); ctx.lineTo(serveurX, h - 30);
+        ctx.stroke();
+
+        // En-têtes
+        ctx.fillStyle = "#1a2b4a";
+        ctx.strokeStyle = "#8fa3c0";
+        ctx.lineWidth = 1;
+        ctx.fillRect(clientX - 70, 20, 140, 30);
+        ctx.strokeRect(clientX - 70, 20, 140, 30);
+        ctx.fillRect(serveurX - 70, 20, 140, 30);
+        ctx.strokeRect(serveurX - 70, 20, 140, 30);
+
+        ctx.fillStyle = "#c8d4e4";
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("CLIENT", clientX, 40);
+        ctx.fillText("SERVEUR", serveurX, 40);
+        ctx.textAlign = "left";
+
+        // Notes d'appels système
+        ctx.fillStyle = "#8fa3c0";
+        ctx.font = "italic 11px 'Consolas', monospace";
+        ctx.textAlign = "right";
+        ctx.fillText("socket()", clientX - 12, 85);
+        ctx.textAlign = "left";
+        ctx.fillText("socket()", serveurX + 12, 85);
+        ctx.fillText("bind()",   serveurX + 12, 100);
+        ctx.fillText("listen()", serveurX + 12, 115);
+        ctx.fillText("accept()", serveurX + 12, 175);
+
+        // Messages
+        const messages = [
+            { y: 140, label: "SYN",             from: "C", to: "S" },
+            { y: 195, label: "SYN / ACK",       from: "S", to: "C" },
+            { y: 245, label: "ACK",             from: "C", to: "S" },
+            { y: 300, label: "données",         from: "C", to: "S" },
+            { y: 340, label: "données",         from: "S", to: "C" },
+            { y: 395, label: "FIN",             from: "C", to: "S" },
+            { y: 430, label: "ACK",             from: "S", to: "C" }
+        ];
+
+        messages.forEach(m => {
+            const x1 = m.from === "C" ? clientX : serveurX;
+            const x2 = m.to   === "C" ? clientX : serveurX;
+
+            ctx.strokeStyle = "#9bc3e3";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x1, m.y);
+            ctx.lineTo(x2, m.y);
+            ctx.stroke();
+
+            const dir = x2 > x1 ? 1 : -1;
+            ctx.fillStyle = "#9bc3e3";
+            ctx.beginPath();
+            ctx.moveTo(x2, m.y);
+            ctx.lineTo(x2 - dir * 10, m.y - 5);
+            ctx.lineTo(x2 - dir * 10, m.y + 5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#e8edf4";
+            ctx.font = "12px 'Consolas', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(m.label, (x1 + x2) / 2, m.y - 8);
+            ctx.textAlign = "left";
+        });
+
+        // Bandeau ESTABLISHED
+        ctx.fillStyle = "rgba(47, 107, 58, 0.35)";
+        ctx.fillRect(clientX + 20, 268, serveurX - clientX - 40, 22);
+        ctx.strokeStyle = "#4ade80";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(clientX + 20, 268, serveurX - clientX - 40, 22);
+        ctx.fillStyle = "#4ade80";
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("ESTABLISHED", (clientX + serveurX) / 2, 283);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma États TCP ---------- */
+    const sE = setup("schemaEtatsTCP");
+    if (sE) {
+        const { ctx, w, h } = sE;
+        fond(ctx, w, h);
+
+        function etat(x, y, label, couleur) {
+            const bw = 160, bh = 46;
+            ctx.fillStyle = couleur || "#1a2b4a";
+            ctx.strokeStyle = "#9bc3e3";
+            ctx.lineWidth = 1.5;
+            ctx.fillRect(x, y, bw, bh);
+            ctx.strokeRect(x, y, bw, bh);
+            ctx.fillStyle = "#e8edf4";
+            ctx.font = "bold 13px 'Consolas', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(label, x + bw / 2, y + bh / 2 + 5);
+            ctx.textAlign = "left";
+            return { x, y, w: bw, h: bh };
+        }
+
+        function fleche(x1, y1, x2, y2, label, dashed) {
+            ctx.strokeStyle = "#9bc3e3";
+            ctx.lineWidth = 1.8;
+            if (dashed) ctx.setLineDash([5, 4]);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.fillStyle = "#9bc3e3";
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 10 * Math.cos(angle - 0.4), y2 - 10 * Math.sin(angle - 0.4));
+            ctx.lineTo(x2 - 10 * Math.cos(angle + 0.4), y2 - 10 * Math.sin(angle + 0.4));
+            ctx.closePath();
+            ctx.fill();
+
+            if (label) {
+                const mx = (x1 + x2) / 2;
+                const my = (y1 + y2) / 2;
+                ctx.fillStyle = "#c8d4e4";
+                ctx.font = "italic 11px 'Consolas', monospace";
+                ctx.textAlign = "center";
+                ctx.fillText(label, mx, my - 6);
+                ctx.textAlign = "left";
+            }
+        }
+
+        const col1 = 60,  col2 = 380, col3 = 700;
+        const row1 = 60,  row2 = 200, row3 = 340;
+
+        const closed  = etat(col1, row2, "CLOSED");
+        const listen  = etat(col2, row1, "LISTEN", "#1e3a5f");
+        const synRecv = etat(col2, row2, "SYN_RECEIVED");
+        const estab   = etat(col2, row3, "ESTABLISHED", "#1e4a2c");
+        const closeW  = etat(col3, row2, "CLOSE_WAIT");
+        const lastAck = etat(col3, row3, "LAST_ACK");
+
+        fleche(closed.x + closed.w, closed.y + closed.h / 2,
+               listen.x, listen.y + listen.h / 2,
+               "socket / bind / listen");
+
+        fleche(listen.x + listen.w / 2, listen.y + listen.h,
+               synRecv.x + synRecv.w / 2, synRecv.y,
+               "SYN");
+
+        fleche(synRecv.x + synRecv.w / 2, synRecv.y + synRecv.h,
+               estab.x + estab.w / 2, estab.y,
+               "ACK");
+
+        fleche(estab.x + estab.w, estab.y + estab.h / 2,
+               closeW.x, closeW.y + closeW.h / 2,
+               "FIN");
+
+        fleche(closeW.x + closeW.w / 2, closeW.y + closeW.h,
+               lastAck.x + lastAck.w / 2, lastAck.y,
+               "close()");
+
+        // Retour LAST_ACK -> CLOSED
+        ctx.strokeStyle = "#9bc3e3";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(lastAck.x + lastAck.w / 2, lastAck.y + lastAck.h);
+        ctx.lineTo(lastAck.x + lastAck.w / 2, lastAck.y + lastAck.h + 35);
+        ctx.lineTo(closed.x + closed.w / 2, closed.y + closed.h + 35);
+        ctx.lineTo(closed.x + closed.w / 2, closed.y + closed.h);
+        ctx.stroke();
+
+        ctx.fillStyle = "#9bc3e3";
+        ctx.beginPath();
+        ctx.moveTo(closed.x + closed.w / 2, closed.y + closed.h);
+        ctx.lineTo(closed.x + closed.w / 2 - 6, closed.y + closed.h + 10);
+        ctx.lineTo(closed.x + closed.w / 2 + 6, closed.y + closed.h + 10);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#c8d4e4";
+        ctx.font = "italic 11px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("ACK", lastAck.x + lastAck.w / 2 + 60, lastAck.y + lastAck.h + 48);
+        ctx.textAlign = "left";
+    }
+})();
+</script>
+
+</body>
+</html>

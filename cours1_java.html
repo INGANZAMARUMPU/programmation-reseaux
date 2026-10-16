@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmation Réseau — Jour 1 : Sockets TCP/UDP en Java</title>
+<style>
+:root {
+    --primary: #1a2b4a;
+    --accent: #2c5282;
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --border: #c8c8c8;
+    --code-bg: #f4f4f0;
+    --code-border: #d0d0c8;
+    --callout-bg: #fdfaf2;
+    --callout-border: #b8860b;
+    --info-bg: #f2f6fa;
+    --info-border: #2c5282;
+    --success-bg: #f2f8f3;
+    --success-border: #2f6b3a;
+    --danger-bg: #faf3f3;
+    --danger-border: #8b2c2c;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12pt;
+    line-height: 1.55;
+}
+header {
+    background: var(--primary);
+    color: #ffffff;
+    padding: 45px 25px 35px;
+    border-bottom: 3px solid #0f1a30;
+}
+.header-content { max-width: 1050px; margin: auto; }
+header h1 { font-size: 1.9rem; margin: 0 0 6px; font-weight: 700; }
+header h2 {
+    color: #d8e0ec; border: none; margin: 0 0 16px;
+    font-weight: 400; font-size: 1.15rem; font-style: italic;
+}
+header p { font-size: 1rem; max-width: 760px; color: #e8edf4; }
+.badge {
+    display: inline-block; background: transparent;
+    border: 1px solid #8fa3c0; padding: 3px 10px; border-radius: 2px;
+    margin: 3px 6px 3px 0; font-size: 0.75rem;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.6px; text-transform: uppercase; color: #d8e0ec;
+}
+nav {
+    position: sticky; top: 0; z-index: 100;
+    background: #0f1a30; border-bottom: 1px solid #2a3a55;
+}
+.nav-content {
+    max-width: 1050px; margin: auto;
+    display: flex; overflow-x: auto; gap: 0; padding: 4px 10px;
+}
+nav a {
+    color: #c8d4e4; text-decoration: none; padding: 9px 13px;
+    white-space: nowrap; font-size: 0.82rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+}
+nav a:hover { color: #ffffff; border-bottom-color: #8fa3c0; }
+main { max-width: 1050px; margin: auto; padding: 35px 20px; }
+section {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 28px 32px; margin-bottom: 24px;
+}
+h2 {
+    color: var(--primary); font-size: 1.35rem; font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin-top: 0; margin-bottom: 18px;
+}
+h3 {
+    color: #2a3a55; margin-top: 24px; margin-bottom: 8px;
+    font-weight: 700; font-size: 1.05rem;
+}
+h4 {
+    color: var(--accent); font-weight: 700;
+    margin-bottom: 6px; font-size: 1rem;
+}
+p { margin: 10px 0; }
+ul, ol { padding-left: 28px; }
+li { margin: 4px 0; }
+.callout {
+    padding: 16px 22px; margin: 15px 0; border-left: 3px solid;
+}
+.callout.objectifs { background: var(--info-bg); border-color: var(--info-border); }
+.callout.important { background: var(--callout-bg); border-color: var(--callout-border); }
+.callout.info { background: var(--info-bg); border-color: var(--info-border); }
+.callout.success { background: var(--success-bg); border-color: var(--success-border); }
+.callout.danger { background: var(--danger-bg); border-color: var(--danger-border); }
+pre {
+    background: var(--code-bg); color: #1a1a1a;
+    padding: 16px 20px; border: 1px solid var(--code-border);
+    overflow-x: auto;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.85rem; line-height: 1.5; margin: 14px 0;
+}
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eeeeea; color: #1a1a1a;
+    padding: 1px 5px; font-size: 0.88em; border: 1px solid #dcdcd6;
+}
+pre code { background: transparent; border: none; padding: 0; font-size: 0.85rem; }
+table {
+    width: 100%; border-collapse: collapse;
+    margin: 18px 0; font-size: 0.95rem;
+}
+th, td {
+    border: 1px solid var(--border); padding: 9px 12px;
+    text-align: left; vertical-align: top;
+}
+th { background: #eef1f5; color: #1a2b4a; font-weight: 700; }
+tr:nth-child(even) { background: #fafaf8; }
+.exercise {
+    border: 1px solid #a0a0a0; border-left: 3px solid var(--primary);
+    background: #fcfcfa; padding: 18px 22px; margin: 20px 0;
+}
+.level {
+    display: inline-block; padding: 2px 10px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;
+    border: 1px solid; margin-bottom: 8px;
+}
+.easy { background: #eef6ee; color: #2f6b3a; border-color: #2f6b3a; }
+.medium { background: #fdf8ee; color: #8a6508; border-color: #8a6508; }
+.hard { background: #f8eeee; color: #8b2c2c; border-color: #8b2c2c; }
+.schema {
+    margin: 20px 0 24px; border: 1px solid #b9c2cf;
+    background: #f8fafc; padding: 16px;
+}
+.schema h4 { margin-top: 0; }
+.schema canvas {
+    display: block; width: 100%; height: auto;
+    background: #101820; border: 1px solid #3c4652; margin: 8px 0;
+}
+.schema .caption {
+    margin: 8px 0 0; color: #4a5568;
+    font-size: .92rem; text-align: center;
+}
+footer {
+    background: #1a2b4a; color: #c8d4e4;
+    text-align: center; padding: 28px 20px; margin-top: 30px;
+    font-size: 0.85rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-top: 3px solid #0f1a30;
+}
+footer p { margin: 4px 0; }
+@media (max-width: 700px) {
+    header h1 { font-size: 1.4rem; }
+    header h2 { font-size: 1rem; }
+    section { padding: 20px 18px; }
+    pre { font-size: 0.78rem; }
+    h2 { font-size: 1.15rem; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-content">
+        <span class="badge">Programmation Réseau</span>
+        <span class="badge">Jour 1 / 11</span>
+        <span class="badge">Java</span>
+        <span class="badge">TCP / UDP</span>
+
+        <h1>Jour 1 — Sockets TCP et UDP en Java</h1>
+        <h2>Le socle de la programmation réseau</h2>
+
+        <p>
+            Cette première journée introduit l'abstraction fondamentale
+            de toute communication entre programmes : la socket. Elle
+            couvre sa définition, le cycle de vie d'une connexion TCP,
+            l'API Java correspondante (<code>java.net</code>), la variante
+            UDP, ainsi que les mécanismes de gestion d'erreurs et de
+            timeout.
+        </p>
+
+        <p>
+            <strong>Durée :</strong> 5 heures &nbsp;|&nbsp;
+            <strong>Prérequis :</strong> bases de Java (classes, méthodes,
+            tableaux, exceptions, flux d'entrée/sortie), notions de
+            modèles OSI et TCP/IP
+        </p>
+    </div>
+</header>
+
+<nav>
+    <div class="nav-content">
+        <a href="#objectifs">Objectifs</a>
+        <a href="#socket">Socket</a>
+        <a href="#tcp">TCP</a>
+        <a href="#api">API Java</a>
+        <a href="#erreurs">Erreurs</a>
+        <a href="#udp">UDP</a>
+        <a href="#pieges">Pièges</a>
+        <a href="#tp1">TP1</a>
+        <a href="#tp2">TP2</a>
+        <a href="#tp3">TP3</a>
+        <a href="#tp4">TP4</a>
+        <a href="#bilan">Bilan</a>
+    </div>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     1. OBJECTIFS
+============================================================ -->
+<section id="objectifs">
+    <h2>1. Objectifs pédagogiques</h2>
+
+    <div class="callout objectifs">
+        <p>À l'issue de cette première journée, l'étudiant doit être capable de :</p>
+        <ul>
+            <li>définir la notion de <em>socket</em> et l'identifier par un couple <code>(adresse, port)</code> ;</li>
+            <li>distinguer les modèles TCP et UDP du point de vue du programmeur ;</li>
+            <li>décrire le cycle de vie d'une connexion TCP et les états d'une socket ;</li>
+            <li>utiliser l'API <code>java.net</code> pour écrire un client et un serveur, en TCP comme en UDP ;</li>
+            <li>manipuler des données binaires (<code>byte[]</code>) et maîtriser l'encodage/décodage ;</li>
+            <li>comprendre la sémantique exacte de <code>write()</code>, <code>flush()</code>, <code>read()</code> et <code>receive()</code> ;</li>
+            <li>gérer les erreurs réseau courantes (timeout, connexion refusée, fermeture, port occupé) ;</li>
+            <li>concevoir un format de message simple pour un protocole applicatif.</li>
+        </ul>
+    </div>
+
+    <h3>Organisation de la journée</h3>
+    <table>
+        <tr><th>Activité</th><th>Durée</th></tr>
+        <tr><td>Cours — Notion de socket, TCP, UDP</td><td>0 h 50</td></tr>
+        <tr><td>Cours — API Java : classes, flux, encodage, exceptions</td><td>0 h 50</td></tr>
+        <tr><td>Cours — Erreurs, timeout, fermeture, UDP spécificités</td><td>0 h 40</td></tr>
+        <tr><td>TP1 — Écho TCP</td><td>0 h 40</td></tr>
+        <tr><td>TP2 — Robustesse et erreurs</td><td>0 h 40</td></tr>
+        <tr><td>TP3 — Écho UDP et perte de paquets</td><td>0 h 40</td></tr>
+        <tr><td>TP4 — Mini-protocole applicatif</td><td>0 h 30</td></tr>
+        <tr><td>Synthèse et questions</td><td>0 h 10</td></tr>
+    </table>
+</section>
+
+<!-- ============================================================
+     2. NOTION DE SOCKET
+============================================================ -->
+<section id="socket">
+    <h2>2. Notion de socket</h2>
+
+    <h3>2.1 — Définition</h3>
+
+    <p>
+        Une <strong>socket</strong> est une abstraction fournie par le
+        système d'exploitation qui représente une <strong>extrémité de
+        communication</strong> entre deux programmes. Elle est identifiée
+        par un triplet <code>(adresse IP, port, protocole de transport)</code>.
+    </p>
+
+    <p>
+        Du point de vue du programmeur, une socket est un objet sur lequel
+        on peut lire et écrire. Du point de vue du système, c'est une
+        structure de données interne associée à un descripteur de fichier.
+        Une même application peut ouvrir plusieurs sockets simultanément.
+    </p>
+
+    <div class="callout info">
+        <strong>Remarque —</strong> une socket n'est ni un câble, ni une
+        connexion. C'est une <strong>extrémité</strong>. Une connexion
+        TCP est identifiée par un couple de sockets (une par extrémité),
+        soit un quadruplet <code>(IP source, port source, IP destination,
+        port destination)</code>.
+    </div>
+
+    <h3>2.2 — Identifiants d'une socket</h3>
+
+    <table>
+        <tr><th>Élément</th><th>Rôle</th><th>Exemple</th></tr>
+        <tr>
+            <td>Adresse IP</td>
+            <td>Identifie la machine sur le réseau</td>
+            <td><code>192.168.1.10</code>, <code>127.0.0.1</code></td>
+        </tr>
+        <tr>
+            <td>Port</td>
+            <td>Identifie le processus sur la machine (16 bits, 0–65535)</td>
+            <td><code>80</code>, <code>443</code>, <code>9000</code></td>
+        </tr>
+        <tr>
+            <td>Protocole de transport</td>
+            <td>Détermine le mode de communication</td>
+            <td>TCP ou UDP</td>
+        </tr>
+    </table>
+
+    <p>
+        Le couple <code>(IP, port)</code> est unique à un instant donné
+        sur une machine, pour un protocole donné. Deux processus ne
+        peuvent pas écouter sur le même port avec le même protocole.
+        En revanche, TCP et UDP peuvent partager le même numéro de port
+        sans conflit : ils appartiennent à deux espaces distincts.
+    </p>
+
+    <h3>2.3 — Ports réservés et ports dynamiques</h3>
+
+    <table>
+        <tr><th>Plage</th><th>Nom</th><th>Usage</th></tr>
+        <tr><td>0 – 1023</td><td>Ports bien connus</td><td>Services standards (80, 443, 22…)</td></tr>
+        <tr><td>1024 – 49151</td><td>Ports enregistrés</td><td>Applications connues</td></tr>
+        <tr><td>49152 – 65535</td><td>Ports dynamiques</td><td>Alloués automatiquement côté client</td></tr>
+    </table>
+
+    <p>
+        Sous Linux, les ports inférieurs à 1024 nécessitent des privilèges
+        root. En pratique, on développe sur des ports supérieurs
+        (8000, 9000, etc.).
+    </p>
+
+    <h3>2.4 — Adresses particulières</h3>
+
+    <table>
+        <tr><th>Adresse</th><th>Signification</th></tr>
+        <tr><td><code>127.0.0.1</code></td><td>Boucle locale (loopback) — la machine elle-même</td></tr>
+        <tr><td><code>0.0.0.0</code></td><td>Toutes les interfaces — pour un serveur qui écoute partout</td></tr>
+        <tr><td><code>255.255.255.255</code></td><td>Diffusion limitée au réseau local</td></tr>
+    </table>
+
+    <div class="callout important">
+        <strong>À retenir —</strong> un serveur qui écoute sur
+        <code>0.0.0.0</code> accepte les connexions sur toutes ses
+        interfaces réseau (loopback, Ethernet, Wi-Fi…). Un serveur qui
+        écoute sur <code>127.0.0.1</code> n'accepte que les connexions
+        locales, ce qui est plus sûr en développement.
+    </div>
+</section>
+
+<!-- ============================================================
+     3. TCP
+============================================================ -->
+<section id="tcp">
+    <h2>3. TCP : le mode connecté</h2>
+
+    <h3>3.1 — Propriétés</h3>
+
+    <table>
+        <tr><th>Propriété</th><th>TCP</th></tr>
+        <tr><td>Type</td><td>Orienté connexion (flux d'octets)</td></tr>
+        <tr><td>Fiabilité</td><td>Garantie (retransmission, accusés de réception)</td></tr>
+        <tr><td>Ordre</td><td>Préservé</td></tr>
+        <tr><td>Frontières de message</td><td>Absentes — TCP est un flux continu</td></tr>
+        <tr><td>Contrôle de flux</td><td>Oui (fenêtre glissante)</td></tr>
+        <tr><td>Contrôle de congestion</td><td>Oui (slow start, congestion avoidance)</td></tr>
+        <tr><td>Classes Java</td><td><code>Socket</code>, <code>ServerSocket</code></td></tr>
+    </table>
+
+    <h3>3.2 — Cycle de vie d'une connexion</h3>
+
+    <div class="schema">
+        <h4>Schéma 1 — Cycle de vie d'une connexion TCP</h4>
+        <canvas id="schemaHandshake" width="900" height="480"></canvas>
+        <p class="caption">
+            Ouverture en trois temps (SYN, SYN/ACK, ACK), échange de
+            données, puis fermeture négociée (FIN, ACK, FIN, ACK).
+        </p>
+    </div>
+
+    <p>
+        L'établissement d'une connexion TCP se fait en trois segments
+        (three-way handshake) :
+    </p>
+    <ol>
+        <li>Le client envoie un segment <code>SYN</code> (synchronisation) avec son numéro de séquence initial.</li>
+        <li>Le serveur répond par un <code>SYN/ACK</code> acquittant le SYN du client et proposant son propre numéro de séquence.</li>
+        <li>Le client confirme par un <code>ACK</code>.</li>
+    </ol>
+
+    <p>
+        La fermeture est également négociée, en quatre segments (chaque
+        extrémité ferme son propre sens de communication). Cette
+        symétrie explique l'apparition de l'état <code>TIME_WAIT</code>
+        côté client, qui persiste environ deux minutes après la fermeture.
+    </p>
+
+    <h3>3.3 — États d'une socket TCP</h3>
+
+    <div class="schema">
+        <h4>Schéma 2 — États d'une socket TCP (côté serveur)</h4>
+        <canvas id="schemaEtatsTCP" width="900" height="480"></canvas>
+        <p class="caption">
+            États principaux : CLOSED, LISTEN, SYN_RECEIVED, ESTABLISHED,
+            CLOSE_WAIT, LAST_ACK. Les transitions correspondent aux appels
+            Java et aux segments reçus.
+        </p>
+    </div>
+
+    <p>
+        L'état <code>ESTABLISHED</code> est le seul où les données
+        circulent normalement. L'état <code>CLOSE_WAIT</code> indique
+        que le pair a fermé son côté, mais que l'application locale
+        n'a pas encore appelé <code>close()</code>.
+    </p>
+
+    <div class="callout important">
+        <strong>À retenir —</strong> côté serveur, l'ordre des appels
+        est <code>new ServerSocket(port)</code> puis
+        <code>serverSocket.accept()</code>. Côté client :
+        <code>new Socket(hôte, port)</code>.
+    </div>
+</section>
+
+<!-- ============================================================
+     4. API JAVA
+============================================================ -->
+<section id="api">
+    <h2>4. API Java : le paquetage <code>java.net</code></h2>
+
+    <h3>4.1 — Classes principales</h3>
+
+    <table>
+        <tr><th>Classe</th><th>Rôle</th><th>Côté</th></tr>
+        <tr>
+            <td><code>ServerSocket</code></td>
+            <td>Socket d'écoute TCP</td>
+            <td>Serveur</td>
+        </tr>
+        <tr>
+            <td><code>Socket</code></td>
+            <td>Socket de communication TCP</td>
+            <td>Client et serveur (après accept)</td>
+        </tr>
+        <tr>
+            <td><code>DatagramSocket</code></td>
+            <td>Socket UDP</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>DatagramPacket</code></td>
+            <td>Datagramme UDP (données + adresse)</td>
+            <td>Client et serveur</td>
+        </tr>
+        <tr>
+            <td><code>InetAddress</code></td>
+            <td>Adresse IP</td>
+            <td>Client et serveur</td>
+        </tr>
+    </table>
+
+    <h3>4.2 — Méthodes principales de <code>ServerSocket</code></h3>
+
+    <table>
+        <tr><th>Méthode</th><th>Rôle</th></tr>
+        <tr><td><code>new ServerSocket(port)</code></td><td>Crée et attache la socket au port</td></tr>
+        <tr><td><code>setReuseAddress(true)</code></td><td>Autorise la réutilisation de l'adresse (équivalent <code>SO_REUSEADDR</code>)</td></tr>
+        <tr><td><code>accept()</code></td><td>Accepte une connexion, renvoie un <code>Socket</code> dédié</td></tr>
+        <tr><td><code>close()</code></td><td>Ferme la socket d'écoute</td></tr>
+        <tr><td><code>getLocalPort()</code></td><td>Renvoie le port effectivement lié</td></tr>
+    </table>
+
+    <h3>4.3 — Méthodes principales de <code>Socket</code></h3>
+
+    <table>
+        <tr><th>Méthode</th><th>Rôle</th></tr>
+        <tr><td><code>new Socket(hôte, port)</code></td><td>Crée et connecte la socket au serveur</td></tr>
+        <tr><td><code>connect(SocketAddress, timeout)</code></td><td>Se connecte avec un timeout</td></tr>
+        <tr><td><code>getInputStream()</code></td><td>Flux d'entrée (lecture des octets reçus)</td></tr>
+        <tr><td><code>getOutputStream()</code></td><td>Flux de sortie (écriture des octets à envoyer)</td></tr>
+        <tr><td><code>setSoTimeout(ms)</code></td><td>Fixe un timeout sur <code>read()</code></td></tr>
+        <tr><td><code>setReuseAddress(true)</code></td><td>Autorise la réutilisation de l'adresse locale</td></tr>
+        <tr><td><code>close()</code></td><td>Ferme la socket</td></tr>
+    </table>
+
+    <h3>4.4 — Flux d'entrée / sortie</h3>
+
+    <p>
+        Java ne manipule pas directement des sockets pour les données :
+        on passe par des <strong>flux</strong> (<code>InputStream</code>,
+        <code>OutputStream</code>). Ces flux sont obtenus une seule
+        fois par socket et réutilisés.
+    </p>
+
+<pre><code>Socket socket = new Socket("127.0.0.1", 9000);
+
+InputStream in = socket.getInputStream();
+OutputStream out = socket.getOutputStream();
+
+// Écriture
+byte[] donnees = "Bonjour".getBytes(StandardCharsets.UTF_8);
+out.write(donnees);
+out.flush();   // indispensable
+
+// Lecture
+byte[] buffer = new byte[1024];
+int n = in.read(buffer);   // renvoie -1 si fin de flux</code></pre>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> en Java, <code>OutputStream</code>
+        est souvent <strong>tamponné</strong>. Il faut appeler
+        <code>flush()</code> après chaque écriture pour forcer l'envoi
+        effectif des octets.
+    </div>
+
+    <h3>4.5 — Encodage des chaînes</h3>
+
+    <p>
+        <code>String.getBytes()</code> utilise l'encodage par défaut de
+        la plateforme, qui peut varier. Il faut toujours spécifier
+        explicitement <code>StandardCharsets.UTF_8</code>.
+    </p>
+
+<pre><code>String message = "Bonjour";
+
+// Encodage explicite (bonne pratique)
+byte[] donnees = message.getBytes(StandardCharsets.UTF_8);
+
+// Décodage explicite
+String texte = new String(donnees, StandardCharsets.UTF_8);</code></pre>
+
+    <h3>4.6 — Sémantique de <code>read()</code></h3>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> <code>InputStream.read(byte[])</code>
+        renvoie le nombre d'octets lus, ou <code>-1</code> si la fin du
+        flux est atteinte (équivalent de <code>b""</code> en Python).
+        Il peut renvoyer <strong>moins</strong> que la taille du tampon.
+    </div>
+
+    <p>
+        Deux conséquences pratiques :
+    </p>
+    <ul>
+        <li>un appel à <code>write()</code> ne correspond pas
+            nécessairement à un appel à <code>read()</code> ;</li>
+        <li>pour lire une quantité fixe d'octets, il faut boucler
+            jusqu'à l'avoir obtenue.</li>
+    </ul>
+
+<pre><code>/**
+ * Lit exactement n octets, ou lève une IOException si la connexion se ferme.
+ */
+public static byte[] readExactly(InputStream in, int n) throws IOException {
+    byte[] donnees = new byte[n];
+    int lus = 0;
+    while (lus &lt; n) {
+        int r = in.read(donnees, lus, n - lus);
+        if (r == -1) {
+            throw new IOException("connexion fermée avant réception complète");
+        }
+        lus += r;
+    }
+    return donnees;
+}</code></pre>
+
+    <h3>4.7 — Détection de fermeture</h3>
+
+    <p>
+        <code>read()</code> qui renvoie <code>-1</code> signale que le
+        pair a fermé la connexion. C'est la méthode canonique de
+        détection, et elle ne lève pas d'exception.
+    </p>
+
+<pre><code>int n = in.read(buffer);
+if (n == -1) {
+    System.out.println("connexion fermée par le pair");
+}</code></pre>
+
+    <h3>4.8 — Timeout</h3>
+
+    <p>
+        Par défaut, les opérations bloquantes (<code>accept()</code>,
+        <code>read()</code>) attendent indéfiniment. On fixe un délai
+        maximal avec <code>setSoTimeout()</code> (en millisecondes).
+    </p>
+
+<pre><code>socket.setSoTimeout(5000);   // 5 secondes
+
+try {
+    int n = in.read(buffer);
+} catch (SocketTimeoutException e) {
+    System.out.println("délai dépassé");
+}</code></pre>
+
+    <p>
+        <code>setSoTimeout(0)</code> rétablit le mode bloquant.
+    </p>
+
+    <h3>4.9 — Réutilisation d'adresse</h3>
+
+    <p>
+        Après la fermeture d'un serveur, le port reste dans l'état
+        <code>TIME_WAIT</code> pendant environ deux minutes. Tenter
+        de relancer le serveur immédiatement échoue avec
+        <code>BindException</code>.
+    </p>
+
+<pre><code>ServerSocket server = new ServerSocket();
+server.setReuseAddress(true);
+server.bind(new InetSocketAddress(9000));</code></pre>
+
+    <p>
+        Contrairement à Python, en Java il faut créer le
+        <code>ServerSocket</code> avec le constructeur sans argument,
+        appeler <code>setReuseAddress(true)</code>, puis
+        <code>bind()</code>. Si on utilise <code>new ServerSocket(port)</code>,
+        le bind est déjà effectué.
+    </p>
+
+    <h3>4.10 — Exemple complet : serveur et client TCP</h3>
+
+    <p>
+        Ce couple d'exemples illustre l'ensemble des notions ci-dessus.
+        Il servira de référence pour les TP.
+    </p>
+
+    <h4>Serveur — <code>ServeurEcho.java</code></h4>
+<pre><code>import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+
+public class ServeurEcho {
+
+    public static void main(String[] args) throws IOException {
+        ServerSocket server = new ServerSocket();
+        server.setReuseAddress(true);
+        server.bind(new InetSocketAddress("0.0.0.0", 9000));
+        System.out.println("[serveur] écoute sur 9000");
+
+        try (Socket conn = server.accept()) {
+            conn.setSoTimeout(10000);
+            System.out.println("[serveur] client " + conn.getRemoteSocketAddress());
+
+            InputStream in = conn.getInputStream();
+            OutputStream out = conn.getOutputStream();
+            byte[] buffer = new byte[1024];
+
+            int n;
+            while ((n = in.read(buffer)) != -1) {
+                System.out.println("[serveur] reçu " + n + " octets");
+                out.write(buffer, 0, n);
+                out.flush();
+            }
+            System.out.println("[serveur] client déconnecté");
+        } finally {
+            server.close();
+        }
+    }
+}</code></pre>
+
+    <h4>Client — <code>ClientEcho.java</code></h4>
+<pre><code>import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+
+public class ClientEcho {
+
+    public static void main(String[] args) throws IOException {
+        try (Socket socket = new Socket("127.0.0.1", 9000)) {
+            socket.setSoTimeout(5000);
+            System.out.println("[client] connecté");
+
+            InputStream in = socket.getInputStream();
+            OutputStream out = socket.getOutputStream();
+
+            byte[] message = "Bonjour serveur".getBytes(StandardCharsets.UTF_8);
+            out.write(message);
+            out.flush();
+
+            byte[] buffer = new byte[1024];
+            int n = in.read(buffer);
+            if (n == -1) {
+                System.out.println("[client] connexion fermée");
+            } else {
+                String reponse = new String(buffer, 0, n, StandardCharsets.UTF_8);
+                System.out.println("[client] réponse : " + reponse);
+            }
+        }
+    }
+}</code></pre>
+
+    <h3>4.11 — Compilation et exécution</h3>
+
+<pre><code># Terminal 1
+javac ServeurEcho.java
+java ServeurEcho
+
+# Terminal 2
+javac ClientEcho.java
+java ClientEcho</code></pre>
+</section>
+
+<!-- ============================================================
+     5. ERREURS RESEAU
+============================================================ -->
+<section id="erreurs">
+    <h2>5. Erreurs réseau courantes en Java</h2>
+
+    <p>
+        Un programme réseau doit anticiper les erreurs. Contrairement à
+        un programme local, il dépend d'un environnement non maîtrisé :
+        le réseau, l'autre machine, la disponibilité du service.
+    </p>
+
+    <h3>5.1 — Catalogue des exceptions</h3>
+
+    <table>
+        <tr><th>Exception</th><th>Cause</th><th>Remède</th></tr>
+        <tr>
+            <td><code>ConnectException</code></td>
+            <td>Serveur non lancé, port erroné, ou rejet explicite</td>
+            <td>Vérifier l'état du serveur, le port</td>
+        </tr>
+        <tr>
+            <td><code>SocketTimeoutException</code></td>
+            <td>Pas de réponse dans le délai imparti</td>
+            <td><code>setSoTimeout()</code>, <code>try/catch</code></td>
+        </tr>
+        <tr>
+            <td><code>BindException</code></td>
+            <td>Port déjà occupé (état <code>TIME_WAIT</code>)</td>
+            <td><code>setReuseAddress(true)</code></td>
+        </tr>
+        <tr>
+            <td><code>SocketException</code></td>
+            <td>Connexion fermée brutalement, ou socket invalide</td>
+            <td>Gérer dans <code>try/catch</code>, fermer proprement</td>
+        </tr>
+        <tr>
+            <td><code>UnknownHostException</code></td>
+            <td>Échec de résolution de nom (DNS)</td>
+            <td>Vérifier le nom d'hôte, la connexion DNS</td>
+        </tr>
+        <tr>
+            <td><code>NoRouteToHostException</code></td>
+            <td>Route absente vers la destination</td>
+            <td>Vérifier la configuration réseau</td>
+        </tr>
+        <tr>
+            <td><code>EOFException</code></td>
+            <td>Fin de flux prématurée (via <code>DataInputStream</code>)</td>
+            <td>Détecter la fermeture avant lecture</td>
+        </tr>
+    </table>
+
+    <h3>5.2 — Hiérarchie des exceptions</h3>
+
+    <p>
+        La plupart des exceptions réseau héritent de
+        <code>IOException</code>. Il est possible de les intercepter
+        toutes ensemble, ou individuellement.
+    </p>
+
+<pre><code>try {
+    Socket socket = new Socket("127.0.0.1", 9000);
+    // ...
+} catch (ConnectException e) {
+    System.err.println("connexion refusée : " + e.getMessage());
+} catch (SocketTimeoutException e) {
+    System.err.println("timeout : " + e.getMessage());
+} catch (IOException e) {
+    System.err.println("erreur d'E/S : " + e.getMessage());
+}</code></pre>
+
+    <h3>5.3 — Structure canonique d'un serveur robuste</h3>
+
+<pre><code>import java.io.*;
+import java.net.*;
+
+public class ServeurRobuste {
+    public static void main(String[] args) {
+        ServerSocket server = null;
+        try {
+            server = new ServerSocket();
+            server.setReuseAddress(true);
+            server.bind(new InetSocketAddress("0.0.0.0", 9000));
+
+            try (Socket conn = server.accept()) {
+                conn.setSoTimeout(10000);
+                InputStream in = conn.getInputStream();
+                OutputStream out = conn.getOutputStream();
+                byte[] buffer = new byte[1024];
+
+                while (true) {
+                    int n;
+                    try {
+                        n = in.read(buffer);
+                    } catch (SocketTimeoutException e) {
+                        System.err.println("timeout sur read()");
+                        break;
+                    }
+                    if (n == -1) break;
+
+                    try {
+                        out.write(buffer, 0, n);
+                        out.flush();
+                    } catch (IOException e) {
+                        System.err.println("erreur d'écriture : " + e.getMessage());
+                        break;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("erreur serveur : " + e.getMessage());
+        } finally {
+            if (server != null && !server.isClosed()) {
+                try { server.close(); } catch (IOException ignored) {}
+            }
+        }
+    }
+}</code></pre>
+
+    <p>
+        Le bloc <code>finally</code> garantit la libération des
+        ressources, même en cas d'erreur. Le <code>try-with-resources</code>
+        sur <code>Socket</code> ferme automatiquement la connexion.
+    </p>
+
+    <h3>5.4 — <code>try/finally</code> versus <code>try-with-resources</code></h3>
+
+    <p>
+        Java 7 a introduit le <code>try-with-resources</code>, qui
+        ferme automatiquement les ressources implémentant
+        <code>AutoCloseable</code>. C'est la forme moderne et
+        recommandée.
+    </p>
+
+<pre><code>// Ancienne forme — try/finally explicite
+Socket socket = null;
+try {
+    socket = new Socket("127.0.0.1", 9000);
+    // ...
+} finally {
+    if (socket != null) socket.close();
+}
+
+// Forme moderne — try-with-resources
+try (Socket socket = new Socket("127.0.0.1", 9000)) {
+    // ...
+}</code></pre>
+</section>
+
+<!-- ============================================================
+     6. UDP
+============================================================ -->
+<section id="udp">
+    <h2>6. UDP : le mode non connecté</h2>
+
+    <h3>6.1 — Propriétés</h3>
+
+    <table>
+        <tr><th>Propriété</th><th>UDP</th></tr>
+        <tr><td>Type</td><td>Non connecté (datagrammes)</td></tr>
+        <tr><td>Fiabilité</td><td>Aucune garantie</td></tr>
+        <tr><td>Ordre</td><td>Non préservé</td></tr>
+        <tr><td>Frontières de message</td><td>Présentes — un envoi = un datagramme</td></tr>
+        <tr><td>Contrôle de flux</td><td>Non</td></tr>
+        <tr><td>Contrôle de congestion</td><td>Non</td></tr>
+        <tr><td>Classes Java</td><td><code>DatagramSocket</code>, <code>DatagramPacket</code></td></tr>
+    </table>
+
+    <h3>6.2 — Classes principales</h3>
+
+    <table>
+        <tr><th>Classe / Méthode</th><th>Rôle</th></tr>
+        <tr><td><code>new DatagramSocket(port)</code></td><td>Crée une socket UDP attachée à un port</td></tr>
+        <tr><td><code>new DatagramSocket()</code></td><td>Crée une socket UDP sur un port libre (client)</td></tr>
+        <tr><td><code>send(DatagramPacket)</code></td><td>Envoie un datagramme</td></tr>
+        <tr><td><code>receive(DatagramPacket)</code></td><td>Reçoit un datagramme (bloquant)</td></tr>
+        <tr><td><code>new DatagramPacket(buf, len)</code></td><td>Datagramme pour réception</td></tr>
+        <tr><td><code>new DatagramPacket(buf, len, addr, port)</code></td><td>Datagramme pour émission</td></tr>
+        <tr><td><code>getAddress()</code>, <code>getPort()</code></td><td>Adresse et port de l'expéditeur</td></tr>
+    </table>
+
+    <h3>6.3 — Exemple complet : serveur et client UDP</h3>
+
+    <h4>Serveur UDP — <code>ServeurUdp.java</code></h4>
+<pre><code>import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+
+public class ServeurUdp {
+
+    public static void main(String[] args) throws IOException {
+        DatagramSocket socket = new DatagramSocket(9001);
+        System.out.println("[serveur UDP] écoute sur 9001");
+
+        byte[] buffer = new byte[1024];
+
+        while (true) {
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            socket.receive(packet);
+
+            String message = new String(packet.getData(), 0, packet.getLength(),
+                                        StandardCharsets.UTF_8);
+            System.out.println("[serveur UDP] " + packet.getSocketAddress()
+                               + " : " + message);
+
+            // Écho : renvoyer le même datagramme à l'expéditeur
+            socket.send(packet);
+        }
+    }
+}</code></pre>
+
+    <h4>Client UDP — <code>ClientUdp.java</code></h4>
+<pre><code>import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+
+public class ClientUdp {
+
+    public static void main(String[] args) throws IOException {
+        DatagramSocket socket = new DatagramSocket();
+        socket.setSoTimeout(3000);
+
+        byte[] message = "ping UDP".getBytes(StandardCharsets.UTF_8);
+        InetAddress adresse = InetAddress.getByName("127.0.0.1");
+        DatagramPacket paquet = new DatagramPacket(message, message.length,
+                                                   adresse, 9001);
+        socket.send(paquet);
+
+        byte[] buffer = new byte[1024];
+        DatagramPacket reponse = new DatagramPacket(buffer, buffer.length);
+
+        try {
+            socket.receive(reponse);
+            String texte = new String(reponse.getData(), 0,
+                                      reponse.getLength(),
+                                      StandardCharsets.UTF_8);
+            System.out.println("[client UDP] réponse : " + texte);
+        } catch (SocketTimeoutException e) {
+            System.out.println("[client UDP] pas de réponse");
+        }
+
+        socket.close();
+    }
+}</code></pre>
+
+    <h3>6.4 — Différences fondamentales TCP / UDP</h3>
+
+    <table>
+        <tr><th>Critère</th><th>TCP</th><th>UDP</th></tr>
+        <tr><td>Établissement</td><td>Oui (handshake)</td><td>Non</td></tr>
+        <tr><td>Envoi</td><td><code>OutputStream.write</code></td><td><code>DatagramSocket.send</code></td></tr>
+        <tr><td>Réception</td><td><code>InputStream.read</code></td><td><code>DatagramSocket.receive</code></td></tr>
+        <tr><td>Frontières</td><td>Non</td><td>Oui</td></tr>
+        <tr><td>Détection de perte</td><td>Automatique</td><td>Aucune</td></tr>
+        <tr><td>Signalement de fermeture</td><td><code>read() == -1</code></td><td>Impossible à détecter</td></tr>
+        <tr><td>Cas d'usage</td><td>HTTP, SSH, transfert de fichiers</td><td>DNS, VoIP, jeux, streaming</td></tr>
+    </table>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> en UDP, l'absence de réponse n'est
+        pas détectable par le protocole. Si un datagramme est perdu,
+        l'application attend indéfiniment. Seul un timeout applicatif
+        permet de détecter la perte.
+    </div>
+
+    <h3>6.5 — Taille d'un datagramme</h3>
+
+    <p>
+        La taille maximale d'un datagramme UDP est théoriquement de
+        65507 octets (limite du protocole IP). En pratique, on dépasse
+        rarement 1472 octets (MTU Ethernet 1500 – en-têtes IP et UDP).
+        Au-delà, la fragmentation IP dégrade les performances et
+        augmente les risques de perte.
+    </p>
+</section>
+
+<!-- ============================================================
+     7. PIEGES
+============================================================ -->
+<section id="pieges">
+    <h2>7. Pièges et erreurs courantes en Java</h2>
+
+    <p>
+        Cette section recense les erreurs les plus fréquentes
+        rencontrées par les étudiants lors de l'écriture de programmes
+        réseau en Java. Chaque piège est présenté sous la forme
+        <em>symptôme → cause → remède</em>.
+    </p>
+
+    <h3>7.1 — Piège : oublier <code>flush()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le client envoie un message, mais
+        le serveur ne reçoit rien.
+        <p>
+            <strong>Cause —</strong> <code>OutputStream</code> est
+            souvent tamponné. Les octets restent en mémoire tant que
+            <code>flush()</code> n'est pas appelé.
+        </p>
+        <p>
+            <strong>Remède —</strong> appeler <code>out.flush()</code>
+            après chaque <code>write()</code>.
+        </p>
+    </div>
+
+    <h3>7.2 — Piège : oublier l'encodage explicite</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> les caractères accentués sont
+        corrompus d'une machine à l'autre.
+        <p>
+            <strong>Cause —</strong> <code>String.getBytes()</code>
+            sans argument utilise l'encodage par défaut de la
+            plateforme, qui peut différer.
+        </p>
+        <p>
+            <strong>Remède —</strong> toujours spécifier
+            <code>StandardCharsets.UTF_8</code>.
+        </p>
+    </div>
+
+    <h3>7.3 — Piège : croire que <code>read()</code> lit tout</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un message long arrive tronqué,
+        ou une partie du message suivant est collée au premier.
+        <p>
+            <strong>Cause —</strong> <code>read()</code> renvoie
+            <em>jusqu'à</em> la taille du tampon, pas exactement
+            cette taille. C'est le comportement du flux TCP.
+        </p>
+        <p>
+            <strong>Remède —</strong> boucler jusqu'à avoir la quantité
+            désirée, ou utiliser un délimiteur, ou préfixer par une
+            longueur.
+        </p>
+    </div>
+
+    <h3>7.4 — Piège : confondre <code>accept()</code> et le socket de communication</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le serveur ne peut pas accepter un
+        second client.
+        <p>
+            <strong>Cause —</strong> <code>accept()</code> renvoie
+            <strong>un nouveau <code>Socket</code></strong> dédié à la
+            communication. Le <code>ServerSocket</code> reste
+            disponible pour d'autres <code>accept()</code>.
+        </p>
+        <p>
+            <strong>Remède —</strong> bien distinguer
+            <code>ServerSocket server</code> (écoute) et
+            <code>Socket conn</code> (communication).
+        </p>
+    </div>
+
+    <h3>7.5 — Piège : oublier <code>setReuseAddress</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>java.net.BindException: Address already in use</code>
+        au redémarrage du serveur.
+        <p>
+            <strong>Cause —</strong> le port est encore en
+            <code>TIME_WAIT</code> après la fermeture.
+        </p>
+        <p>
+            <strong>Remède —</strong> utiliser le constructeur sans
+            argument puis <code>setReuseAddress(true)</code> avant
+            <code>bind()</code>.
+        </p>
+    </div>
+
+    <h3>7.6 — Piège : ne pas gérer la fermeture</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> boucle infinie dans le serveur,
+        ou <code>SocketException</code> lors d'un envoi.
+        <p>
+            <strong>Cause —</strong> <code>read() == -1</code> non
+            détecté, ou écriture sur un socket fermé.
+        </p>
+        <p>
+            <strong>Remède —</strong> tester <code>if (n == -1) break;</code>
+            après chaque <code>read()</code>. Envelopper les écritures
+            dans un <code>try/catch</code> sur <code>IOException</code>.
+        </p>
+    </div>
+
+    <h3>7.7 — Piège : bloquer indéfiniment sur <code>read()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le programme ne répond plus,
+        impossible de l'interrompre proprement.
+        <p>
+            <strong>Cause —</strong> <code>read()</code> sans timeout
+            attend indéfiniment.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>setSoTimeout(ms)</code> et
+            gérer <code>SocketTimeoutException</code>.
+        </p>
+    </div>
+
+    <h3>7.8 — Piège : croire qu'UDP signale les pertes</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le client UDP attend indéfiniment
+        alors que le serveur n'est pas lancé.
+        <p>
+            <strong>Cause —</strong> UDP n'a aucun mécanisme de retour.
+            Un datagramme vers un port fermé génère un message ICMP
+            <em>port unreachable</em>, mais celui-ci n'est pas remonté
+            à l'application par défaut.
+        </p>
+        <p>
+            <strong>Remède —</strong> prévoir un timeout applicatif
+            avec <code>setSoTimeout()</code> et une stratégie de
+            retransmission si nécessaire.
+        </p>
+    </div>
+
+    <h3>7.9 — Piège : réutiliser un socket fermé</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>java.net.SocketException: Socket is closed</code>.
+        <p>
+            <strong>Cause —</strong> un socket fermé ne peut plus
+            être utilisé. Il doit être recréé.
+        </p>
+        <p>
+            <strong>Remède —</strong> vérifier le cycle de vie. En cas
+            de reconnexion, créer un nouveau <code>Socket</code>.
+        </p>
+    </div>
+
+    <h3>7.10 — Piège : <code>read()</code> avec un tampon trop petit</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> les messages longs sont tronqués.
+        <p>
+            <strong>Cause —</strong> <code>read(buffer)</code> ne lit
+            que <code>buffer.length</code> octets au maximum, le reste
+            reste dans le tampon.
+        </p>
+        <p>
+            <strong>Remède —</strong> dimensionner le tampon en fonction
+            du protocole, ou boucler jusqu'à épuisement.
+        </p>
+    </div>
+
+    <h3>7.11 — Piège : utiliser <code>PrintWriter</code> sans <code>autoFlush</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> les messages textuels n'arrivent
+        pas, malgré un <code>println()</code>.
+        <p>
+            <strong>Cause —</strong> <code>PrintWriter</code> est
+            tamponné. Par défaut, <code>autoFlush</code> est à
+            <code>false</code>.
+        </p>
+        <p>
+            <strong>Remède —</strong> créer avec
+            <code>new PrintWriter(out, true)</code> (le second argument
+            active l'autoFlush), ou appeler <code>flush()</code>
+            explicitement.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     8. TP1
+============================================================ -->
+<section id="tp1">
+    <h2>8. TP 1 — Client et serveur d'écho TCP</h2>
+
+    <div class="exercise">
+        <span class="level easy">Facile</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Écrire un serveur TCP qui renvoie tel quel tout message
+            reçu, et un client qui envoie un message puis affiche la
+            réponse. Ce TP met en œuvre les notions des sections 4.1
+            à 4.11.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur — <code>ServeurEcho.java</code></h4>
+        <ul>
+            <li>Créer un <code>ServerSocket</code> avec
+                <code>setReuseAddress(true)</code>, attaché au port
+                <code>9000</code> sur toutes les interfaces.</li>
+            <li>Accepter une connexion, afficher l'adresse du client.</li>
+            <li>Récupérer <code>InputStream</code> et
+                <code>OutputStream</code>.</li>
+            <li>Boucler : lire dans un tampon de 1024 octets, afficher
+                le nombre d'octets reçus, renvoyer les octets à
+                l'identique, appeler <code>flush()</code>.</li>
+            <li>Sortir de la boucle sur <code>read() == -1</code>.</li>
+            <li>Fermer proprement le socket client et le
+                <code>ServerSocket</code>.</li>
+        </ul>
+
+        <h4>Client — <code>ClientEcho.java</code></h4>
+        <ul>
+            <li>Créer un <code>Socket</code> connecté à
+                <code>127.0.0.1:9000</code>.</li>
+            <li>Fixer un timeout de 5 secondes.</li>
+            <li>Encoder la chaîne <code>"Bonjour serveur"</code> en
+                UTF-8 et l'envoyer via <code>OutputStream</code>.</li>
+            <li>Appeler <code>flush()</code>.</li>
+            <li>Lire la réponse, la décoder en UTF-8, l'afficher.</li>
+            <li>Fermer le socket.</li>
+        </ul>
+
+        <h3>Exécution</h3>
+<pre><code># Terminal 1
+javac ServeurEcho.java
+java ServeurEcho
+
+# Terminal 2
+javac ClientEcho.java
+java ClientEcho</code></pre>
+
+        <h3>Observation Wireshark</h3>
+        <p>
+            Lancer une capture sur l'interface de bouclage
+            (<code>lo</code> ou <code>Loopback</code>) avec le filtre
+            <code>tcp.port == 9000</code>. Identifier :
+        </p>
+        <ul>
+            <li>les trois segments de la poignée de main ;</li>
+            <li>le segment contenant <code>"Bonjour serveur"</code> ;</li>
+            <li>le segment contenant l'écho ;</li>
+            <li>les segments de fermeture (<code>FIN</code>, <code>ACK</code>).</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Le message <code>"Bonjour serveur"</code> fait 15 caractères.
+            Combien de segments TCP ont été nécessaires pour le
+            transporter ? Pourquoi ce nombre ne correspond-il pas
+            exactement à un envoi / une réception dans le code Java ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     9. TP2
+============================================================ -->
+<section id="tp2">
+    <h2>9. TP 2 — Robustesse et gestion des erreurs</h2>
+
+    <div class="exercise">
+        <span class="level medium">Moyen</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Reprendre le TP1 et le rendre tolérant aux erreurs réseau
+            décrites en section 5. L'objectif est qu'aucune situation
+            anormale ne provoque un crash.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur</h4>
+        <ul>
+            <li>Timeout de 10 secondes sur <code>read()</code> avec
+                <code>setSoTimeout(10000)</code>.</li>
+            <li>Boucle de lecture jusqu'à ce que le client ferme
+                (<code>read() == -1</code>).</li>
+            <li>Gestion explicite de <code>SocketTimeoutException</code>
+                et <code>SocketException</code>.</li>
+            <li>Bloc <code>finally</code> garantissant la fermeture
+                du <code>ServerSocket</code>.</li>
+            <li>Utilisation de <code>try-with-resources</code> pour
+                le <code>Socket</code> client.</li>
+        </ul>
+
+        <h4>Client</h4>
+        <ul>
+            <li>Timeout de 5 secondes sur <code>connect()</code> et
+                <code>read()</code>.</li>
+            <li>Gestion de <code>ConnectException</code> et
+                <code>SocketTimeoutException</code>.</li>
+            <li>Message d'erreur explicite en cas d'échec.</li>
+        </ul>
+
+        <h3>Expériences à mener</h3>
+        <ol>
+            <li>Lancer le client sans le serveur. Observer le message
+                d'erreur produit.</li>
+            <li>Lancer le serveur, puis interrompre le client en pleine
+                communication (Ctrl+C). Observer le comportement du
+                serveur.</li>
+            <li>Relancer immédiatement le serveur. Vérifier que
+                <code>setReuseAddress(true)</code> évite l'erreur de
+                port occupé.</li>
+            <li>Modifier le client pour qu'il envoie un message puis
+                attende 20 secondes. Observer le timeout côté serveur.</li>
+        </ol>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi le bloc <code>finally</code> est-il indispensable
+            pour la fermeture du <code>ServerSocket</code> ? Quel est
+            l'avantage de <code>try-with-resources</code> par rapport
+            à un <code>finally</code> explicite pour le
+            <code>Socket</code> client ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     10. TP3
+============================================================ -->
+<section id="tp3">
+    <h2>10. TP 3 — Écho UDP et perte de paquets</h2>
+
+    <div class="exercise">
+        <span class="level medium">Moyen</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Écrire un serveur et un client UDP, puis observer
+            expérimentalement l'absence de retour en cas de perte de
+            paquet. Ce TP met en œuvre les notions de la section 6.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur UDP — <code>ServeurUdp.java</code></h4>
+        <ul>
+            <li>Créer un <code>DatagramSocket</code> attaché au port
+                <code>9001</code>.</li>
+            <li>Boucler indéfiniment : recevoir un
+                <code>DatagramPacket</code>, afficher l'adresse de
+                l'expéditeur et le contenu, renvoyer le datagramme
+                à l'expéditeur.</li>
+            <li>Le serveur ne s'arrête jamais (arrêt par Ctrl+C).</li>
+        </ul>
+
+        <h4>Client UDP — <code>ClientUdp.java</code></h4>
+        <ul>
+            <li>Créer un <code>DatagramSocket</code> sur un port libre.</li>
+            <li>Fixer un timeout de 3 secondes avec
+                <code>setSoTimeout(3000)</code>.</li>
+            <li>Envoyer <code>"ping UDP"</code> à
+                <code>127.0.0.1:9001</code>.</li>
+            <li>Attendre la réponse, l'afficher, ou afficher
+                <code>"pas de réponse"</code> en cas de
+                <code>SocketTimeoutException</code>.</li>
+        </ul>
+
+        <h3>Expériences à mener</h3>
+        <ol>
+            <li>Lancer le serveur puis le client. Vérifier la réponse.</li>
+            <li>Arrêter le serveur UDP, relancer le client. Observer
+                l'absence de <code>ConnectException</code> et le
+                déclenchement du timeout. Comparer avec TCP.</li>
+            <li>Modifier le serveur pour ignorer un message sur deux
+                (à l'aide d'un compteur). Relancer le client plusieurs
+                fois. Observer les cas de non-réponse.</li>
+            <li>Ajouter au client une boucle d'envoi de 10 messages
+                consécutifs et compter combien de réponses sont
+                reçues. Conclure.</li>
+        </ol>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            En UDP, comment un programme Java peut-il savoir qu'un
+            datagramme a été perdu ? Quelles stratégies peut-on mettre
+            en place au niveau applicatif pour pallier cette absence
+            de signalement ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     11. TP4
+============================================================ -->
+<section id="tp4">
+    <h2>11. TP 4 — Mini-protocole applicatif</h2>
+
+    <div class="exercise">
+        <span class="level hard">Difficile</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Concevoir et implémenter un protocole applicatif simple :
+            un serveur de calcul qui reçoit des opérations et renvoie
+            le résultat ou un message d'erreur. Ce TP mobilise
+            l'ensemble des notions de la journée.
+        </p>
+
+        <h3>Spécification du protocole</h3>
+
+        <table>
+            <tr><th>Requête</th><th>Réponse attendue</th></tr>
+            <tr><td><code>add 3 5</code></td><td><code>8</code></td></tr>
+            <tr><td><code>sub 10 4</code></td><td><code>6</code></td></tr>
+            <tr><td><code>mul 6 7</code></td><td><code>42</code></td></tr>
+            <tr><td><code>div 10 0</code></td><td><code>ERROR division par zéro</code></td></tr>
+            <tr><td><code>add 3</code></td><td><code>ERROR format invalide</code></td></tr>
+            <tr><td><code>foo 1 2</code></td><td><code>ERROR opération inconnue</code></td></tr>
+        </table>
+
+        <p>
+            Les messages sont encodés en UTF-8. Chaque requête tient
+            sur une ligne terminée par un saut de ligne. Le serveur
+            répond par une ligne, terminée également par un saut de
+            ligne.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Serveur TCP — <code>ServeurCalc.java</code></h4>
+        <ul>
+            <li>Écouter sur le port <code>9002</code> avec
+                <code>setReuseAddress(true)</code>.</li>
+            <li>Accepter une connexion, puis traiter les requêtes
+                successives jusqu'à fermeture par le client.</li>
+            <li>Pour chaque requête : décoder, analyser
+                (<code>split(" ")</code>), exécuter l'opération,
+                produire une réponse terminée par un saut de ligne.</li>
+            <li>Gérer les erreurs de format et les opérations
+                inconnues.</li>
+            <li>Utiliser un timeout de 10 secondes et gérer
+                <code>SocketTimeoutException</code>.</li>
+            <li>Encoder les réponses en UTF-8 et appeler
+                <code>flush()</code>.</li>
+        </ul>
+
+        <h4>Client TCP — <code>ClientCalc.java</code></h4>
+        <ul>
+            <li>Se connecter à <code>127.0.0.1:9002</code>.</li>
+            <li>Boucler : lire une ligne au clavier (avec
+                <code>BufferedReader</code> sur <code>System.in</code>),
+                l'encoder en UTF-8, l'envoyer avec un saut de ligne,
+                <code>flush()</code>, attendre la réponse, l'afficher.</li>
+            <li>Quitter sur la commande <code>quit</code>.</li>
+        </ul>
+
+        <h3>Extensions</h3>
+        <ul>
+            <li>Accepter des nombres flottants.</li>
+            <li>Ajouter l'opération <code>pow</code>.</li>
+            <li>Reprendre le même protocole en UDP et comparer le
+                comportement en cas de perte.</li>
+            <li>Ajouter un compteur de requêtes traitées côté serveur.</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Le protocole est ici textuel, avec des messages séparés par
+            des sauts de ligne. Quels sont les avantages et les
+            inconvénients de ce choix par rapport à un format binaire
+            avec un champ de longueur explicite (par exemple avec
+            <code>DataOutputStream.writeInt()</code>) ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     12. BILAN
+============================================================ -->
+<section id="bilan">
+    <h2>12. À retenir — Jour 1</h2>
+
+    <div class="callout success">
+        <ul>
+            <li>Une socket est une extrémité de communication identifiée
+                par un triplet <code>(adresse IP, port, protocole)</code>.</li>
+            <li>TCP est connecté, fiable, ordonné, sans frontières de
+                message. UDP est non connecté, non fiable, avec
+                frontières de message.</li>
+            <li>Côté serveur TCP : <code>new ServerSocket</code>
+                (avec <code>setReuseAddress</code>) →
+                <code>accept()</code>.</li>
+            <li>Côté client TCP : <code>new Socket(hôte, port)</code>.</li>
+            <li>Côté serveur UDP : <code>new DatagramSocket(port)</code>.
+                Côté client UDP : <code>new DatagramSocket()</code>.</li>
+            <li>En Java, on n'écrit pas directement sur la socket : on
+                passe par <code>getInputStream()</code> et
+                <code>getOutputStream()</code>.</li>
+            <li>Toujours <code>flush()</code> après écriture.</li>
+            <li>Toujours spécifier <code>StandardCharsets.UTF_8</code>
+                pour l'encodage.</li>
+            <li><code>read()</code> peut renvoyer moins que la taille
+                du tampon. Pour lire une quantité fixe, boucler.</li>
+            <li><code>read() == -1</code> signale la fermeture de la
+                connexion par le pair.</li>
+            <li>Prévoir systématiquement <code>setSoTimeout()</code>,
+                <code>try/catch</code> et <code>finally: close()</code>.</li>
+            <li><code>setReuseAddress(true)</code> évite
+                <code>BindException</code> au redémarrage.</li>
+            <li>UDP ne signale pas les pertes : seul un timeout
+                applicatif permet de les détecter.</li>
+            <li><code>accept()</code> renvoie un <em>nouveau</em>
+                <code>Socket</code>, distinct du
+                <code>ServerSocket</code> d'écoute.</li>
+        </ul>
+    </div>
+
+    <h3>Travail à remettre pour le Jour 1</h3>
+
+    <p>Chaque étudiant remet un répertoire organisé comme suit :</p>
+
+<pre><code>jour1/
+│
+├── ServeurEcho.java
+├── ClientEcho.java
+├── ServeurUdp.java
+├── ClientUdp.java
+├── ServeurCalc.java
+└── ClientCalc.java</code></pre>
+
+    <p>L'ensemble doit :</p>
+    <ul>
+        <li>gérer les erreurs réseau sans planter ;</li>
+        <li>utiliser <code>setReuseAddress(true)</code> côté serveur ;</li>
+        <li>implémenter le mini-protocole de calcul du TP 4 ;</li>
+        <li>respecter les timeouts spécifiés dans chaque TP ;</li>
+        <li>utiliser <code>StandardCharsets.UTF_8</code> partout ;</li>
+        <li>appeler <code>flush()</code> après chaque écriture.</li>
+    </ul>
+</section>
+
+</main>
+
+<footer>
+    <p><strong>Programmation Réseau — Jour 1</strong></p>
+    <p>Sockets TCP et UDP en Java</p>
+    <p>Java 11+ · java.net · Wireshark</p>
+</footer>
+
+<!-- ============================================================
+     SCHÉMAS CANVAS — CONTRASTE ÉLEVÉ
+============================================================ -->
+<script>
+(function () {
+    "use strict";
+
+    // Palette à contraste élevé pour les canvas
+    const BG          = "#101820";   // fond sombre
+    const GRID        = "#3c4652";   // grille discrète
+    const AXIS        = "#c8d4e4";   // axes clairs
+    const TXT_MAIN    = "#ffffff";   // texte principal
+    const TXT_DIM     = "#c8d4e4";   // texte secondaire
+    const TXT_ACCENT  = "#f0c674";   // accent jaune
+    const TXT_CYAN    = "#9bc3e3";   // accent bleu clair
+    const TXT_GREEN   = "#4ade80";   // accent vert
+    const TXT_RED     = "#f87171";   // accent rouge
+    const BOX_FILL    = "#1a2b4a";   // fond de boîte
+    const BOX_STROKE  = "#8fa3c0";   // bord de boîte
+    const ARROW       = "#9bc3e3";   // flèches
+
+    function setup(id) {
+        const c = document.getElementById(id);
+        if (!c) return null;
+        return { c, ctx: c.getContext("2d"), w: c.width, h: c.height };
+    }
+
+    function fond(ctx, w, h) {
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    /* ---------- Schéma Handshake TCP ---------- */
+    const sH = setup("schemaHandshake");
+    if (sH) {
+        const { ctx, w, h } = sH;
+        fond(ctx, w, h);
+
+        const clientX = 150;
+        const serveurX = w - 150;
+
+        // Lignes de vie
+        ctx.strokeStyle = AXIS;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(clientX, 65);  ctx.lineTo(clientX, h - 30);
+        ctx.moveTo(serveurX, 65); ctx.lineTo(serveurX, h - 30);
+        ctx.stroke();
+
+        // En-têtes (boîtes)
+        ctx.fillStyle = BOX_FILL;
+        ctx.strokeStyle = BOX_STROKE;
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(clientX - 75, 20, 150, 36);
+        ctx.strokeRect(clientX - 75, 20, 150, 36);
+        ctx.fillRect(serveurX - 75, 20, 150, 36);
+        ctx.strokeRect(serveurX - 75, 20, 150, 36);
+
+        ctx.fillStyle = TXT_MAIN;
+        ctx.font = "bold 15px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("CLIENT", clientX, 44);
+        ctx.fillText("SERVEUR", serveurX, 44);
+        ctx.textAlign = "left";
+
+        // Notes d'appels système
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.textAlign = "right";
+        ctx.fillText("new Socket(...)", clientX - 14, 95);
+        ctx.textAlign = "left";
+        ctx.fillText("new ServerSocket(...)", serveurX + 14, 95);
+        ctx.fillText("accept()", serveurX + 14, 112);
+
+        // Messages
+        const messages = [
+            { y: 150, label: "SYN",             from: "C", to: "S" },
+            { y: 205, label: "SYN / ACK",       from: "S", to: "C" },
+            { y: 260, label: "ACK",             from: "C", to: "S" },
+            { y: 320, label: "données",         from: "C", to: "S" },
+            { y: 365, label: "données",         from: "S", to: "C" },
+            { y: 425, label: "FIN",             from: "C", to: "S" },
+            { y: 460, label: "ACK",             from: "S", to: "C" }
+        ];
+
+        messages.forEach(m => {
+            const x1 = m.from === "C" ? clientX : serveurX;
+            const x2 = m.to   === "C" ? clientX : serveurX;
+
+            ctx.strokeStyle = ARROW;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, m.y);
+            ctx.lineTo(x2, m.y);
+            ctx.stroke();
+
+            const dir = x2 > x1 ? 1 : -1;
+            ctx.fillStyle = ARROW;
+            ctx.beginPath();
+            ctx.moveTo(x2, m.y);
+            ctx.lineTo(x2 - dir * 12, m.y - 6);
+            ctx.lineTo(x2 - dir * 12, m.y + 6);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = TXT_MAIN;
+            ctx.font = "bold 13px 'Consolas', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(m.label, (x1 + x2) / 2, m.y - 10);
+            ctx.textAlign = "left";
+        });
+
+        // Bandeau ESTABLISHED
+        ctx.fillStyle = "rgba(74, 222, 128, 0.18)";
+        ctx.fillRect(clientX + 20, 288, serveurX - clientX - 40, 24);
+        ctx.strokeStyle = TXT_GREEN;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(clientX + 20, 288, serveurX - clientX - 40, 24);
+        ctx.fillStyle = TXT_GREEN;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("ESTABLISHED", (clientX + serveurX) / 2, 305);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma États TCP ---------- */
+    const sE = setup("schemaEtatsTCP");
+    if (sE) {
+        const { ctx, w, h } = sE;
+        fond(ctx, w, h);
+
+        function etat(x, y, label, couleurFond) {
+            const bw = 170, bh = 50;
+            ctx.fillStyle = couleurFond || BOX_FILL;
+            ctx.strokeStyle = BOX_STROKE;
+            ctx.lineWidth = 2;
+            ctx.fillRect(x, y, bw, bh);
+            ctx.strokeRect(x, y, bw, bh);
+            ctx.fillStyle = TXT_MAIN;
+            ctx.font = "bold 14px 'Consolas', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(label, x + bw / 2, y + bh / 2 + 5);
+            ctx.textAlign = "left";
+            return { x, y, w: bw, h: bh };
+        }
+
+        function fleche(x1, y1, x2, y2, label) {
+            ctx.strokeStyle = ARROW;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.fillStyle = ARROW;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - 12 * Math.cos(angle - 0.4), y2 - 12 * Math.sin(angle - 0.4));
+            ctx.lineTo(x2 - 12 * Math.cos(angle + 0.4), y2 - 12 * Math.sin(angle + 0.4));
+            ctx.closePath();
+            ctx.fill();
+
+            if (label) {
+                const mx = (x1 + x2) / 2;
+                const my = (y1 + y2) / 2;
+                ctx.fillStyle = TXT_ACCENT;
+                ctx.font = "bold 12px 'Consolas', monospace";
+                ctx.textAlign = "center";
+                ctx.fillText(label, mx, my - 8);
+                ctx.textAlign = "left";
+            }
+        }
+
+        const col1 = 60,  col2 = 380, col3 = 700;
+        const row1 = 60,  row2 = 210, row3 = 360;
+
+        const closed  = etat(col1, row2, "CLOSED", "#2a1a1a");
+        const listen  = etat(col2, row1, "LISTEN", "#1e3a5f");
+        const synRecv = etat(col2, row2, "SYN_RECEIVED", BOX_FILL);
+        const estab   = etat(col2, row3, "ESTABLISHED", "#1e4a2c");
+        const closeW  = etat(col3, row2, "CLOSE_WAIT", BOX_FILL);
+        const lastAck = etat(col3, row3, "LAST_ACK", BOX_FILL);
+
+        fleche(closed.x + closed.w, closed.y + closed.h / 2,
+               listen.x, listen.y + listen.h / 2,
+               "bind / listen");
+
+        fleche(listen.x + listen.w / 2, listen.y + listen.h,
+               synRecv.x + synRecv.w / 2, synRecv.y,
+               "SYN");
+
+        fleche(synRecv.x + synRecv.w / 2, synRecv.y + synRecv.h,
+               estab.x + estab.w / 2, estab.y,
+               "ACK");
+
+        fleche(estab.x + estab.w, estab.y + estab.h / 2,
+               closeW.x, closeW.y + closeW.h / 2,
+               "FIN");
+
+        fleche(closeW.x + closeW.w / 2, closeW.y + closeW.h,
+               lastAck.x + lastAck.w / 2, lastAck.y,
+               "close()");
+
+        // Retour LAST_ACK -> CLOSED (par le bas)
+        ctx.strokeStyle = ARROW;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(lastAck.x + lastAck.w / 2, lastAck.y + lastAck.h);
+        ctx.lineTo(lastAck.x + lastAck.w / 2, lastAck.y + lastAck.h + 40);
+        ctx.lineTo(closed.x + closed.w / 2, closed.y + closed.h + 40);
+        ctx.lineTo(closed.x + closed.w / 2, closed.y + closed.h);
+        ctx.stroke();
+
+        ctx.fillStyle = ARROW;
+        ctx.beginPath();
+        ctx.moveTo(closed.x + closed.w / 2, closed.y + closed.h);
+        ctx.lineTo(closed.x + closed.w / 2 - 7, closed.y + closed.h + 12);
+        ctx.lineTo(closed.x + closed.w / 2 + 7, closed.y + closed.h + 12);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("ACK", lastAck.x + lastAck.w / 2 + 70, lastAck.y + lastAck.h + 55);
+        ctx.textAlign = "left";
+    }
+})();
+</script>
+
+</body>
+</html>
