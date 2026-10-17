@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmation Réseau — Jour 2 : Serveur multi-clients et communication non bloquante</title>
+<style>
+:root {
+    --primary: #1a2b4a;
+    --accent: #2c5282;
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --border: #c8c8c8;
+    --code-bg: #f4f4f0;
+    --code-border: #d0d0c8;
+    --callout-bg: #fdfaf2;
+    --callout-border: #b8860b;
+    --info-bg: #f2f6fa;
+    --info-border: #2c5282;
+    --success-bg: #f2f8f3;
+    --success-border: #2f6b3a;
+    --danger-bg: #faf3f3;
+    --danger-border: #8b2c2c;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12pt;
+    line-height: 1.6;
+}
+header {
+    background: var(--primary);
+    color: #ffffff;
+    padding: 45px 25px 35px;
+    border-bottom: 3px solid #0f1a30;
+}
+.header-content { max-width: 1050px; margin: auto; }
+header h1 { font-size: 1.9rem; margin: 0 0 6px; font-weight: 700; }
+header h2 {
+    color: #d8e0ec; border: none; margin: 0 0 16px;
+    font-weight: 400; font-size: 1.15rem; font-style: italic;
+}
+header p { font-size: 1rem; max-width: 760px; color: #e8edf4; }
+.badge {
+    display: inline-block; background: transparent;
+    border: 1px solid #8fa3c0; padding: 3px 10px; border-radius: 2px;
+    margin: 3px 6px 3px 0; font-size: 0.75rem;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.6px; text-transform: uppercase; color: #d8e0ec;
+}
+nav {
+    position: sticky; top: 0; z-index: 100;
+    background: #0f1a30; border-bottom: 1px solid #2a3a55;
+}
+.nav-content {
+    max-width: 1050px; margin: auto;
+    display: flex; overflow-x: auto; gap: 0; padding: 4px 10px;
+}
+nav a {
+    color: #c8d4e4; text-decoration: none; padding: 9px 13px;
+    white-space: nowrap; font-size: 0.82rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+}
+nav a:hover { color: #ffffff; border-bottom-color: #8fa3c0; }
+main { max-width: 1050px; margin: auto; padding: 35px 20px; }
+section {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 28px 32px; margin-bottom: 24px;
+}
+h2 {
+    color: var(--primary); font-size: 1.35rem; font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin-top: 0; margin-bottom: 18px;
+}
+h3 {
+    color: #2a3a55; margin-top: 26px; margin-bottom: 10px;
+    font-weight: 700; font-size: 1.05rem;
+}
+h4 {
+    color: var(--accent); font-weight: 700;
+    margin-bottom: 6px; margin-top: 18px; font-size: 1rem;
+}
+p { margin: 12px 0; }
+ul, ol { padding-left: 28px; }
+li { margin: 6px 0; }
+.callout {
+    padding: 16px 22px; margin: 18px 0; border-left: 3px solid;
+}
+.callout.objectifs { background: var(--info-bg); border-color: var(--info-border); }
+.callout.important { background: var(--callout-bg); border-color: var(--callout-border); }
+.callout.info { background: var(--info-bg); border-color: var(--info-border); }
+.callout.success { background: var(--success-bg); border-color: var(--success-border); }
+.callout.danger { background: var(--danger-bg); border-color: var(--danger-border); }
+pre {
+    background: var(--code-bg); color: #1a1a1a;
+    padding: 16px 20px; border: 1px solid var(--code-border);
+    overflow-x: auto;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.85rem; line-height: 1.55; margin: 14px 0;
+}
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eeeeea; color: #1a1a1a;
+    padding: 1px 5px; font-size: 0.88em; border: 1px solid #dcdcd6;
+}
+pre code { background: transparent; border: none; padding: 0; font-size: 0.85rem; }
+table {
+    width: 100%; border-collapse: collapse;
+    margin: 18px 0; font-size: 0.95rem;
+}
+th, td {
+    border: 1px solid var(--border); padding: 9px 12px;
+    text-align: left; vertical-align: top;
+}
+th { background: #eef1f5; color: #1a2b4a; font-weight: 700; }
+tr:nth-child(even) { background: #fafaf8; }
+.exercise {
+    border: 1px solid #a0a0a0; border-left: 3px solid var(--primary);
+    background: #fcfcfa; padding: 18px 22px; margin: 20px 0;
+}
+.level {
+    display: inline-block; padding: 2px 10px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;
+    border: 1px solid; margin-bottom: 8px;
+}
+.easy { background: #eef6ee; color: #2f6b3a; border-color: #2f6b3a; }
+.medium { background: #fdf8ee; color: #8a6508; border-color: #8a6508; }
+.hard { background: #f8eeee; color: #8b2c2c; border-color: #8b2c2c; }
+.schema {
+    margin: 22px 0 26px; border: 1px solid #b9c2cf;
+    background: #fbfcfd; padding: 16px;
+}
+.schema h4 { margin-top: 0; }
+.schema canvas {
+    display: block; width: 100%; height: auto;
+    background: #ffffff; border: 1px solid #dbe1e8; margin: 8px 0;
+}
+.schema .caption {
+    margin: 10px 0 0; color: #4a5568;
+    font-size: .92rem; text-align: center;
+}
+.sequence {
+    display: inline-block; padding: 3px 10px;
+    background: var(--primary); color: #ffffff;
+    font-size: 0.75rem; font-weight: 700;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: 6px; border-radius: 2px;
+}
+footer {
+    background: #1a2b4a; color: #c8d4e4;
+    text-align: center; padding: 28px 20px; margin-top: 30px;
+    font-size: 0.85rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-top: 3px solid #0f1a30;
+}
+footer p { margin: 4px 0; }
+@media (max-width: 700px) {
+    header h1 { font-size: 1.4rem; }
+    header h2 { font-size: 1rem; }
+    section { padding: 20px 18px; }
+    pre { font-size: 0.78rem; }
+    h2 { font-size: 1.15rem; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-content">
+        <span class="badge">Programmation Réseau</span>
+        <span class="badge">Jour 2 / 11</span>
+        <span class="badge">Java</span>
+        <span class="badge">Concurrence</span>
+
+        <h1>Jour 2 — Serveur multi-clients et communication non bloquante</h1>
+        <h2>Threads, pool, synchronisation</h2>
+
+        <p>
+            Cette deuxième journée part d'un constat : un serveur
+            séquentiel ne peut traiter qu'un seul client à la fois.
+            Elle montre comment rendre l'échange non bloquant, puis
+            comment accepter plusieurs clients simultanément, et
+            enfin comment organiser la communication entre eux par
+            groupes.
+        </p>
+
+        <p>
+            <strong>Durée :</strong> 5 heures &nbsp;|&nbsp;
+            <strong>Prérequis :</strong> Jour 1 (sockets TCP/UDP en Java)
+        </p>
+    </div>
+</header>
+
+<nav>
+    <div class="nav-content">
+        <a href="#objectifs">Objectifs</a>
+        <a href="#seq1">Séq. 1 — Blocage</a>
+        <a href="#seq2">Séq. 2 — Threads</a>
+        <a href="#seq3">Séq. 3 — Multi-clients</a>
+        <a href="#seq4">Séq. 4 — Pool</a>
+        <a href="#seq5">Séq. 5 — Synchronisation</a>
+        <a href="#seq6">Séq. 6 — NIO</a>
+        <a href="#pieges">Pièges</a>
+        <a href="#bilan">Bilan</a>
+    </div>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     1. OBJECTIFS
+============================================================ -->
+<section id="objectifs">
+    <h2>1. Objectifs pédagogiques</h2>
+
+    <div class="callout objectifs">
+        <p>À l'issue de cette deuxième journée, l'étudiant doit être capable de :</p>
+        <ul>
+            <li>expliquer pourquoi un serveur séquentiel bloque, et
+                à quel endroit exactement ;</li>
+            <li>créer et manipuler des threads en Java
+                (<code>Thread</code>, <code>Runnable</code>),
+                et connaître leur cycle de vie ;</li>
+            <li>rendre un échange client-serveur non bloquant par
+                threads de lecture/écriture ;</li>
+            <li>transformer un serveur mono-client en serveur
+                multi-clients ;</li>
+            <li>utiliser un pool de threads
+                (<code>ExecutorService</code>) pour borner les
+                ressources et réutiliser les threads ;</li>
+            <li>protéger une section critique avec
+                <code>synchronized</code> et comprendre pourquoi
+                c'est indispensable ;</li>
+            <li>implémenter un broadcast (diffusion à tous les
+                clients d'un groupe) ;</li>
+            <li>situer l'approche NIO (<code>Selector</code>) par
+                rapport aux threads et savoir quand elle est
+                pertinente.</li>
+        </ul>
+    </div>
+
+    <h3>Organisation de la journée</h3>
+    <table>
+        <tr><th>Séquence</th><th>Type</th><th>Durée</th></tr>
+        <tr><td>1 — Pourquoi ça bloque</td><td>Théorie + micro-TP</td><td>0 h 25</td></tr>
+        <tr><td>2 — Threads Java</td><td>Théorie + micro-TP</td><td>0 h 40</td></tr>
+        <tr><td>3 — Serveur multi-clients</td><td>Théorie + TP</td><td>0 h 45</td></tr>
+        <tr><td>4 — Pool de threads</td><td>Théorie + TP</td><td>0 h 40</td></tr>
+        <tr><td>5 — Synchronisation et broadcast</td><td>Théorie + TP</td><td>0 h 50</td></tr>
+        <tr><td>6 — NIO en survol</td><td>Théorie</td><td>0 h 15</td></tr>
+        <tr><td>Pièges et synthèse</td><td>Bilan</td><td>0 h 20</td></tr>
+        <tr><td>Battement, debug, questions</td><td></td><td>1 h 05</td></tr>
+    </table>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 1 — POURQUOI ÇA BLOQUE
+============================================================ -->
+<section id="seq1">
+    <span class="sequence">Séquence 1</span>
+    <h2>1. Pourquoi un serveur séquentiel bloque</h2>
+
+    <h3>1.1 — Le serveur du Jour 1, en une phrase</h3>
+
+    <p>
+        Le serveur écrit au Jour 1 exécute une boucle très simple :
+        il attend un client, le sert jusqu'à ce que celui-ci ferme
+        la connexion, puis attend le suivant. Cette structure
+        <em>fonctionne</em>, mais elle présente un défaut fondamental :
+        elle traite les clients <strong>strictement l'un après
+        l'autre</strong>.
+    </p>
+
+    <p>
+        Pour bien comprendre le problème, il faut se représenter ce
+        que fait concrètement le programme. Un programme Java
+        s'exécute dans un <strong>thread</strong> — un fil
+        d'exécution — qui déroule ses instructions les unes à la
+        suite. À chaque instant, il est exactement à un endroit du
+        code. S'il est dans une instruction qui attend quelque
+        chose, il ne peut pas en même temps être ailleurs.
+    </p>
+
+    <p>
+        L'analogie naturelle est celle d'un <strong>guichet
+        unique</strong> dans une administration. Un employé, un
+        guichet. Le client A arrive, l'employé le sert. Pendant
+        tout ce temps, le client B attend dehors, même si le dossier
+        du client A est terminé depuis longtemps et que l'employé
+        est simplement en train d'attendre que le client A signe un
+        papier. L'employé pourrait servir B, mais il est
+        <em>occupé à attendre</em>.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> un serveur séquentiel est un
+        guichet unique. Le guichetier attend que le client A ait
+        fini, même si c'est juste pour récupérer une signature. Le
+        client B fait la queue dehors, sans que personne ne
+        s'occupe de lui.
+    </div>
+
+    <h3>1.2 — Les deux endroits exacts où le serveur bloque</h3>
+
+    <p>
+        Le serveur du Jour 1 contient deux instructions qui peuvent
+        bloquer. Comprendre <em>chacune</em> séparément est
+        essentiel pour la suite.
+    </p>
+
+    <h4>Premier blocage : <code>accept()</code></h4>
+
+    <p>
+        <code>ServerSocket.accept()</code> est une instruction
+        <strong>bloquante</strong> : si aucun client n'est en
+        attente de connexion, l'appel ne rend pas la main. Le
+        programme est suspendu à cette ligne. Il ne passe pas à
+        l'instruction suivante, il ne lit rien, il ne calcule rien.
+        Il attend.
+    </p>
+
+    <p>
+        Cette attente est <em>normale</em> et <em>souhaitable</em>
+        au démarrage : le serveur n'a rien à faire tant qu'aucun
+        client ne se connecte. Mais elle devient un problème dès
+        qu'un client est déjà en cours de traitement, parce que
+        <code>accept()</code> ne sera pas appelé avant que le
+        traitement soit fini.
+    </p>
+
+    <h4>Second blocage : <code>read()</code></h4>
+
+    <p>
+        <code>InputStream.read()</code> est également bloquante :
+        si aucun octet n'est disponible dans le tampon du système,
+        l'appel ne rend pas la main. Le programme attend que le
+        client envoie quelque chose. C'est ce qui se passe quand
+        votre serveur attend un message : il ne fait rien d'autre
+        que d'attendre, indéfiniment si nécessaire.
+    </p>
+
+    <p>
+        La conséquence est plus subtile que pour
+        <code>accept()</code>. Pendant que le serveur attend un
+        message du client A, il pourrait très bien être en train de
+        lire un message du client B. Mais il ne peut pas : il est
+        figé sur le <code>read()</code> du client A. Un seul
+        <code>read()</code> à la fois, donc un seul client à la
+        fois.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 1 — Blocage dans <code>accept()</code></h4>
+        <canvas id="schemaBlocage" width="900" height="380"></canvas>
+        <p class="caption">
+            Le serveur traite le client A. Le client B se connecte
+            et envoie même un message, mais son <code>accept()</code>
+            n'est pas encore appelé : il attend dans la file du
+            système, sans que le serveur ne sache qu'il existe.
+        </p>
+    </div>
+
+    <h3>1.3 — Ce que « bloquant » veut dire techniquement</h3>
+
+    <p>
+        Le mot <em>bloquant</em> a un sens précis en programmation
+        système. Une opération est bloquante si le thread qui
+        l'exécute est <strong>retiré du processeur</strong> jusqu'à
+        ce qu'un événement extérieur se produise. Le système
+        d'exploitation place le thread dans un état d'attente, et
+        le processeur peut alors exécuter d'autres threads.
+    </p>
+
+    <p>
+        Cela signifie que <strong>bloquer n'est pas consommer du
+        CPU</strong>. Un serveur qui attend dans <code>accept()</code>
+        ne fait rien du tout — il ne consomme ni processeur, ni
+        mémoire active. Il est simplement suspendu.
+    </p>
+
+    <p>
+        Pourquoi est-ce important ? Parce que si l'on veut que le
+        serveur puisse être réactif <em>malgré</em> les opérations
+        bloquantes, il faut soit les rendre non bloquantes, soit
+        avoir plusieurs threads (chacun pouvant être bloqué sur son
+        propre <code>read()</code>).
+    </p>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> rendre un échange non bloquant
+        ne signifie pas empêcher le thread de s'arrêter. Cela
+        signifie que le programme, dans son ensemble, peut continuer
+        à progresser sur d'autres tâches pendant qu'une opération
+        d'E/S est en attente. Deux mécanismes existent : plusieurs
+        threads, ou des opérations d'E/S non bloquantes (NIO).
+    </div>
+
+    <h3>1.4 — Ce qu'on va construire aujourd'hui</h3>
+
+    <p>
+        Trois étapes, dans cet ordre :
+    </p>
+    <ol>
+        <li><strong>Rendre un échange non bloquant</strong> : un
+            seul client, mais le programme n'est pas figé pendant
+            la lecture.</li>
+        <li><strong>Accepter plusieurs clients</strong> : plusieurs
+            threads, un par client, pour que chaque client ait sa
+            propre opération bloquante indépendante.</li>
+        <li><strong>Organiser la communication</strong> : les
+            clients peuvent s'échanger des messages par groupes,
+            avec la synchronisation nécessaire.</li>
+    </ol>
+
+    <div class="exercise">
+        <span class="level easy">Micro-TP 1 — 10 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Reproduire le blocage et l'observer concrètement, pour
+            que la suite ait un sens vécu et pas seulement théorique.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Reprendre le serveur d'écho du Jour 1
+                (<code>ServeurEcho.java</code>).</li>
+            <li>Le lancer dans un terminal.</li>
+            <li>Lancer <strong>deux clients</strong> dans deux
+                autres terminaux, en utilisant le
+                <code>ClientEcho.java</code> du Jour 1.</li>
+            <li>Envoyer un message depuis le premier client, puis
+                depuis le second.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Quel client obtient une réponse en premier ?</li>
+            <li>Que se passe-t-il pour le second client tant que le
+                premier n'a pas fermé sa connexion ? Est-il rejeté ?
+                En attente ? Erreur ?</li>
+            <li>Que se passe-t-il si l'on ferme le premier client ?
+                Le second est-il alors servi ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Où exactement le serveur est-il bloqué lorsqu'il traite
+            le premier client ? Pourquoi <code>accept()</code>
+            n'est-il pas appelé pendant ce traitement ? Quelles sont
+            les deux opérations bloquantes en jeu, et laquelle bloque
+            dans chacun des deux cas observés ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 2 — THREADS JAVA
+============================================================ -->
+<section id="seq2">
+    <span class="sequence">Séquence 2</span>
+    <h2>2. Threads Java</h2>
+
+    <h3>2.1 — Définition d'un thread</h3>
+
+    <p>
+        Un <strong>thread</strong> (fil d'exécution) est une unité
+        d'exécution à l'intérieur d'un processus. Un processus peut
+        contenir plusieurs threads, qui s'exécutent
+        <em>concurremment</em> : ils partagent la mémoire du
+        processus (mêmes variables, mêmes objets), mais ont chacun
+        leur propre pile d'appels — c'est-à-dire leur propre
+        « position » dans le code à un instant donné.
+    </p>
+
+    <p>
+        Reprenons l'analogie du guichet. Un serveur séquentiel a
+        <strong>un</strong> guichetier. Un serveur multi-thread en a
+        <strong>plusieurs</strong>, qui travaillent en parallèle dans
+        la même agence. Ils partagent les mêmes dossiers (la
+        mémoire), mais chacun sert un client à un instant donné.
+        Quand un guichetier attend une signature, les autres
+        peuvent continuer à servir leurs clients respectifs.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> un thread est un guichetier
+        supplémentaire dans la même agence. Tous voient les mêmes
+        dossiers, mais chacun travaille à son rythme, en parallèle
+        des autres.
+    </div>
+
+    <p>
+        En Java, un thread est représenté par la classe
+        <code>java.lang.Thread</code>. Cette classe encapsule l'état
+        du thread (son nom, sa priorité, son état d'exécution) et
+        fournit les méthodes pour le démarrer, l'arrêter, l'attendre.
+    </p>
+
+    <h3>2.2 — Deux manières de créer un thread</h3>
+
+    <p>
+        Java permet de définir ce qu'un thread doit faire de deux
+        manières. La différence est importante à comprendre.
+    </p>
+
+    <h4>Approche 1 — Hériter de <code>Thread</code></h4>
+
+    <p>
+        On crée une sous-classe de <code>Thread</code> et on
+        redéfinit la méthode <code>run()</code>. C'est le code qui
+        sera exécuté quand le thread démarrera.
+    </p>
+
+<pre><code>class MonThread extends Thread {
+    @Override
+    public void run() {
+        System.out.println("dans le thread " + getName());
+    }
+}
+
+// Utilisation
+MonThread t = new MonThread();
+t.start();   // démarre le thread</code></pre>
+
+    <p>
+        Cette approche est simple mais limitante : en Java, une
+        classe ne peut hériter que d'<strong>une seule</strong>
+        classe. Si <code>MonThread</code> hérite de
+        <code>Thread</code>, elle ne peut pas hériter d'une autre
+        classe utile (par exemple une classe métier).
+    </p>
+
+    <h4>Approche 2 — Implémenter <code>Runnable</code></h4>
+
+    <p>
+        On crée une classe (ou une lambda) qui implémente l'interface
+        <code>Runnable</code>. Cette interface n'a qu'une méthode :
+        <code>run()</code>. On passe ensuite l'instance à un
+        <code>Thread</code>.
+    </p>
+
+<pre><code>class MaTache implements Runnable {
+    @Override
+    public void run() {
+        System.out.println("dans le Runnable");
+    }
+}
+
+// Utilisation
+Thread t = new Thread(new MaTache());
+t.start();
+
+// Avec une lambda (plus concis, car Runnable est une interface fonctionnelle)
+Thread t2 = new Thread(() -> System.out.println("dans une lambda"));
+t2.start();</code></pre>
+
+    <p>
+        Cette approche est <strong>recommandée</strong> par la
+        documentation Java, parce qu'elle sépare la <em>tâche</em>
+        (ce qui doit être fait, défini par <code>Runnable</code>) du
+        <em>thread</em> (le mécanisme d'exécution, défini par
+        <code>Thread</code>). Cette séparation sera cruciale quand
+        on utilisera un pool de threads.
+    </p>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> <code>start()</code> crée un
+        nouveau thread et exécute <code>run()</code> dedans.
+        <code>run()</code> appelé directement exécute le code dans
+        le thread courant — ce n'est pas la même chose. C'est
+        l'erreur la plus fréquente chez les débutants.
+    </div>
+
+    <h3>2.3 — Cycle de vie d'un thread</h3>
+
+    <p>
+        Un thread Java passe par plusieurs états au cours de sa vie.
+        Comprendre ces états permet de diagnostiquer les problèmes
+        de concurrence.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 2 — États d'un thread Java</h4>
+        <canvas id="schemaThread" width="900" height="460"></canvas>
+        <p class="caption">
+            Un thread commence en NEW, devient RUNNABLE après
+            <code>start()</code>, peut passer par BLOCKED / WAITING /
+            TIMED_WAITING selon les opérations, et finit en
+            TERMINATED quand <code>run()</code> se termine.
+        </p>
+    </div>
+
+    <table>
+        <tr><th>État</th><th>Signification</th></tr>
+        <tr>
+            <td><code>NEW</code></td>
+            <td>Thread créé mais pas encore démarré</td>
+        </tr>
+        <tr>
+            <td><code>RUNNABLE</code></td>
+            <td>Thread en cours d'exécution, ou prêt à s'exécuter</td>
+        </tr>
+        <tr>
+            <td><code>BLOCKED</code></td>
+            <td>Thread en attente d'un verrou (voir séquence 5)</td>
+        </tr>
+        <tr>
+            <td><code>WAITING</code></td>
+            <td>Thread qui attend indéfiniment un signal d'un autre
+                thread (<code>wait()</code>, <code>join()</code>)</td>
+        </tr>
+        <tr>
+            <td><code>TIMED_WAITING</code></td>
+            <td>Thread qui attend avec un délai
+                (<code>sleep()</code>, <code>wait(timeout)</code>)</td>
+        </tr>
+        <tr>
+            <td><code>TERMINATED</code></td>
+            <td>Thread terminé (fin de <code>run()</code>)</td>
+        </tr>
+    </table>
+
+    <h3>2.4 — Méthodes essentielles</h3>
+
+    <table>
+        <tr><th>Méthode</th><th>Rôle</th></tr>
+        <tr><td><code>start()</code></td><td>Démarre le thread</td></tr>
+        <tr><td><code>join()</code></td><td>Attend la fin du thread (bloquant)</td></tr>
+        <tr><td><code>sleep(ms)</code></td><td>Suspend le thread pendant <code>ms</code> millisecondes (bloquant)</td></tr>
+        <tr><td><code>isAlive()</code></td><td>Indique si le thread est encore actif</td></tr>
+        <tr><td><code>interrupt()</code></td><td>Demande l'interruption (lève <code>InterruptedException</code> sur <code>sleep</code>/<code>wait</code>)</td></tr>
+        <tr><td><code>setDaemon(true)</code></td><td>Thread démon : n'empêche pas la JVM de se terminer</td></tr>
+        <tr><td><code>getName()</code>, <code>setName()</code></td><td>Nom du thread (utile pour le debug)</td></tr>
+    </table>
+
+    <h3>2.5 — Rendre un échange non bloquant par deux threads</h3>
+
+    <p>
+        Maintenant qu'on sait créer des threads, on peut résoudre le
+        premier problème identifié : <strong>l'échange avec un seul
+        client est bloqué pendant la lecture</strong>. Un programme
+        qui lit dans une boucle ne peut pas, en même temps, lire le
+        clavier ou envoyer un message.
+    </p>
+
+    <p>
+        La solution est d'avoir <strong>deux threads</strong> :
+    </p>
+    <ul>
+        <li>un thread de <strong>lecture</strong>, qui appelle
+            <code>read()</code> en boucle et affiche les messages
+            reçus ;</li>
+        <li>un thread d'<strong>écriture</strong>, qui lit l'entrée
+            clavier et envoie les messages au serveur.</li>
+    </ul>
+
+    <p>
+        Les deux threads partagent le <code>Socket</code>, mais pas
+        les mêmes opérations : l'un utilise
+        <code>getInputStream()</code>, l'autre
+        <code>getOutputStream()</code>. Comme les opérations
+        bloquent dans des threads différents, l'un n'empêche pas
+        l'autre de progresser.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 3 — Échange non bloquant par deux threads</h4>
+        <canvas id="schemaNonBloquant" width="900" height="320"></canvas>
+        <p class="caption">
+            Un thread lit en permanence (<code>read()</code>), un
+            autre écrit quand l'utilisateur le demande. Les deux
+            opérations ne se bloquent pas mutuellement, car elles
+            s'exécutent dans deux threads distincts.
+        </p>
+    </div>
+
+    <div class="exercise">
+        <span class="level easy">Micro-TP 2 — 15 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Écrire un client dont l'écoute du serveur ne bloque plus
+            l'envoi de messages.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Créer une classe <code>ClientNonBloquant.java</code>
+                qui se connecte au serveur d'écho du Jour 1
+                (<code>127.0.0.1:9000</code>).</li>
+            <li>Lancer un thread qui lit en boucle les messages
+                reçus et les affiche. Ce thread doit se terminer
+                proprement si le serveur ferme la connexion.</li>
+            <li>Dans le thread principal, lire l'entrée clavier
+                (<code>BufferedReader</code> sur
+                <code>System.in</code>) et envoyer chaque ligne au
+                serveur.</li>
+            <li>Quitter sur la commande <code>quit</code>, en
+                fermant proprement la connexion.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Le programme répond-il immédiatement au clavier ?</li>
+            <li>Les messages du serveur s'affichent-ils pendant que
+                vous êtes en train de taper ?</li>
+            <li>Que se passe-t-il si le serveur ferme la connexion ?
+                Le thread de lecture se termine-t-il ? Le programme
+                principal se termine-t-il ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Quels sont les avantages et les inconvénients de cette
+            approche par rapport à une boucle unique
+            <code>read()</code> / <code>write()</code> ? Dans quels
+            cas deux threads sont-ils réellement indispensables ?
+            Que se passerait-il si les deux threads écrivaient en
+            même temps dans le même flux de sortie ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 3 — SERVEUR MULTI-CLIENTS
+============================================================ -->
+<section id="seq3">
+    <span class="sequence">Séquence 3</span>
+    <h2>3. Serveur multi-clients par thread</h2>
+
+    <h3>3.1 — Le principe</h3>
+
+    <p>
+        On a vu qu'un client seul avec deux threads peut échanger
+        sans se bloquer. Le même raisonnement s'applique côté
+        serveur : si chaque client traité dans son propre thread,
+        alors le blocage d'un client n'empêche pas les autres
+        d'être servis.
+    </p>
+
+    <p>
+        L'idée est la suivante : le <strong>thread principal</strong>
+        reste dans une boucle d'acceptation. À chaque connexion, il
+        crée un <strong>nouveau thread</strong> chargé de traiter
+        ce client, et retourne immédiatement à
+        <code>accept()</code>. Le nouveau thread, lui, gère son
+        client de bout en bout : lecture des messages, envoi des
+        réponses, fermeture en fin de connexion.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 4 — Serveur multi-clients par thread</h4>
+        <canvas id="schemaMultiClients" width="900" height="400"></canvas>
+        <p class="caption">
+            Le thread principal accepte les connexions et crée un
+            thread de traitement pour chacune. Chaque thread de
+            traitement gère son client de manière autonome, sans
+            bloquer les autres.
+        </p>
+    </div>
+
+    <h3>3.2 — Structure canonique</h3>
+
+    <p>
+        Le serveur ressemble à ceci :
+    </p>
+
+<pre><code>ServerSocket server = new ServerSocket(9000);
+while (true) {
+    Socket conn = server.accept();     // bloquant
+    Thread t = new Thread(new ClientHandler(conn));
+    t.start();                         // non bloquant
+}
+// le thread principal retourne immédiatement à accept()</code></pre>
+
+    <p>
+        La classe <code>ClientHandler</code> implémente
+        <code>Runnable</code> et contient toute la logique de
+        traitement d'un client. Elle est <strong>indépendante</strong>
+        des autres : elle ne partage avec elles que ce que le
+        serveur décide explicitement de partager (par exemple, la
+        liste des clients connectés — voir séquence 5).
+    </p>
+
+<pre><code>public class ClientHandler implements Runnable {
+    private final Socket socket;
+
+    public ClientHandler(Socket socket) {
+        this.socket = socket;
+    }
+
+    @Override
+    public void run() {
+        try (socket;
+             InputStream in = socket.getInputStream();
+             OutputStream out = socket.getOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int n;
+            while ((n = in.read(buffer)) != -1) {
+                out.write(buffer, 0, n);
+                out.flush();
+            }
+        } catch (IOException e) {
+            System.err.println("client " + socket + " : " + e.getMessage());
+        } finally {
+            System.out.println("client " + socket + " déconnecté");
+        }
+    }
+}</code></pre>
+
+    <h3>3.3 — Ce qui est partagé, ce qui ne l'est pas</h3>
+
+    <p>
+        Une erreur fréquente est de croire que tout est partagé entre
+        threads. En réalité, il faut distinguer :
+    </p>
+
+    <table>
+        <tr><th>Élément</th><th>Partagé ?</th><th>Conséquence</th></tr>
+        <tr>
+            <td><code>ServerSocket</code></td>
+            <td>Oui (un seul)</td>
+            <td>Le thread principal l'utilise seul. Les threads de
+                traitement n'y touchent pas.</td>
+        </tr>
+        <tr>
+            <td><code>Socket</code> du client</td>
+            <td>Non</td>
+            <td>Un par client, utilisé par un seul thread de
+                traitement.</td>
+        </tr>
+        <tr>
+            <td>Flux d'entrée/sortie du client</td>
+            <td>Non</td>
+            <td>Un par client, un seul thread y accède.</td>
+        </tr>
+        <tr>
+            <td>Variables d'instance du handler</td>
+            <td>Non</td>
+            <td>Chaque handler a ses propres valeurs.</td>
+        </tr>
+        <tr>
+            <td>Structures globales (liste des clients, compteur)</td>
+            <td>Oui</td>
+            <td>Doivent être protégées (voir séquence 5).</td>
+        </tr>
+    </table>
+
+    <p>
+        Tant qu'on ne partage rien, un serveur multi-thread est
+        <strong>naturellement sûr</strong>. Les problèmes
+        commencent dès qu'on introduit une structure commune
+        (compteur, liste, etc.).
+    </p>
+
+    <h3>3.4 — Le compteur de clients</h3>
+
+    <p>
+        Pour illustrer, on peut vouloir compter le nombre de clients
+        connectés. Une première idée est d'utiliser un
+        <code>int</code> statique :
+    </p>
+
+<pre><code>private static int nbClients = 0;
+
+// à la connexion
+nbClients++;    // ← problème : non atomique
+// à la déconnexion
+nbClients--;    // ← problème : non atomique</code></pre>
+
+    <p>
+        Cette opération <code>nbClients++</code> n'est
+        <strong>pas atomique</strong> : elle se décompose en trois
+        instructions (lire, incrémenter, écrire). Deux threads
+        peuvent s'entrelacer entre ces instructions et perdre une
+        incrémentation. On verra en séquence 5 comment corriger
+        cela. Pour l'instant, on se contente de l'afficher.
+    </p>
+
+    <div class="exercise">
+        <span class="level medium">TP 3 — 25 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Transformer le serveur d'écho du Jour 1 en serveur
+            multi-clients par thread, et vérifier que plusieurs
+            clients sont traités en parallèle.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Créer <code>ServeurMulti.java</code> :
+                <ul>
+                    <li>boucle d'acceptation ;</li>
+                    <li>pour chaque connexion, créer un
+                        <code>Thread</code> avec un
+                        <code>ClientHandler</code> dédié ;</li>
+                    <li>démarrer le thread ;</li>
+                    <li>afficher à chaque acceptation un message du
+                        type <code>"[accept] client X connecté"</code>.</li>
+                </ul>
+            </li>
+            <li>Créer <code>ClientHandler.java</code> :
+                <ul>
+                    <li>lit en boucle les messages du client ;</li>
+                    <li>renvoie chaque message en écho ;</li>
+                    <li>ferme le socket en fin de flux
+                        (<code>read() == -1</code>) ;</li>
+                    <li>gère les <code>IOException</code> ;</li>
+                    <li>affiche un message à la connexion et à la
+                        déconnexion.</li>
+                </ul>
+            </li>
+            <li>Lancer le serveur, puis <strong>3 clients</strong>
+                simultanés dans 3 terminaux.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Les trois clients peuvent-ils échanger en
+                parallèle ?</li>
+            <li>Que se passe-t-il si un client ferme sa connexion ?
+                Les autres continuent-ils ?</li>
+            <li>Combien de threads le serveur a-t-il lancés au
+                total ? Comment le vérifier avec
+                <code>Thread.activeCount()</code> ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Quel est le rôle du thread principal après avoir démarré
+            un thread de traitement ? Pourquoi ne doit-il pas
+            lui-même lire les messages du client ? Que se
+            passerait-il si le thread principal fermait le socket
+            du client après avoir démarré le thread de traitement ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 4 — POOL DE THREADS
+============================================================ -->
+<section id="seq4">
+    <span class="sequence">Séquence 4</span>
+    <h2>4. Pool de threads</h2>
+
+    <h3>4.1 — Pourquoi le thread-par-client ne suffit pas</h3>
+
+    <p>
+        La stratégie « un thread par client » fonctionne bien pour
+        quelques dizaines de connexions. Mais elle a trois limites
+        qui deviennent rédhibitoires pour un serveur réel.
+    </p>
+
+    <h4>Limite 1 — Coût mémoire</h4>
+
+    <p>
+        Chaque thread Java a une pile d'appels. Par défaut, cette
+        pile fait entre 512 Ko et 1 Mo. Pour 1000 clients, cela
+        représente 500 Mo à 1 Go de mémoire, uniquement pour les
+        piles. À cela s'ajoutent les objets alloués par le code de
+        chaque thread.
+    </p>
+
+    <h4>Limite 2 — Coût de création et de destruction</h4>
+
+    <p>
+        Créer un thread n'est pas gratuit : le système d'exploitation
+        doit allouer les ressources, enregistrer le thread auprès du
+        planificateur, etc. Détruire un thread aussi. Pour un
+        serveur de chat où les clients se connectent et se
+        déconnectent souvent, ce coût devient significatif.
+    </p>
+
+    <h4>Limite 3 — Plafond du système</h4>
+
+    <p>
+        Le système d'exploitation impose une limite pratique au
+        nombre de threads simultanés (de l'ordre de quelques
+        milliers selon les configurations). Au-delà, la JVM lève
+        <code>OutOfMemoryError: unable to create native thread</code>.
+    </p>
+
+    <div class="callout important">
+        <strong>Analogie —</strong> au lieu d'embaucher un guichetier
+        pour chaque client puis le licencier à la fin, on embauche
+        un nombre fixe de guichetiers. Les clients font la queue,
+        et chaque guichetier traite le client suivant dès qu'il a
+        fini le précédent. C'est un <strong>pool de threads</strong>.
+    </div>
+
+    <h3>4.2 — Le principe du pool</h3>
+
+    <p>
+        Un <strong>pool de threads</strong> est un ensemble de
+        threads créés une fois pour toutes et <strong>réutilisés</strong>
+        pour exécuter des tâches successives. Les tâches qui
+        arrivent sont placées dans une <strong>file d'attente</strong>,
+        et les threads disponibles les consomment une par une.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 5 — Pool de threads</h4>
+        <canvas id="schemaPool" width="900" height="340"></canvas>
+        <p class="caption">
+            Les tâches (connexions acceptées) sont placées dans une
+            file d'attente. Un nombre fixe de threads les consomme
+            une par une. Un thread qui termine une tâche reprend
+            immédiatement la suivante dans la file.
+        </p>
+    </div>
+
+    <h3>4.3 — <code>ExecutorService</code> en Java</h3>
+
+    <p>
+        Java fournit le framework <code>java.util.concurrent</code>
+        avec l'interface <code>ExecutorService</code> et la classe
+        <code>Executors</code> qui propose des fabriques de pools.
+    </p>
+
+<pre><code>ExecutorService pool = Executors.newFixedThreadPool(10);
+
+while (true) {
+    Socket conn = server.accept();
+    pool.submit(new ClientHandler(conn));   // ← remplace new Thread(...).start()
+}</code></pre>
+
+    <p>
+        Le code est presque identique à la version thread-par-client.
+        La différence est que <code>submit()</code> ne crée pas un
+        nouveau thread : il place la tâche dans la file du pool.
+        Un thread disponible la prendra.
+    </p>
+
+    <table>
+        <tr><th>Méthode</th><th>Rôle</th></tr>
+        <tr><td><code>newFixedThreadPool(n)</code></td><td>Pool à <code>n</code> threads fixes</td></tr>
+        <tr><td><code>newCachedThreadPool()</code></td><td>Pool qui crée des threads à la demande, les réutilise 60 s</td></tr>
+        <tr><td><code>newSingleThreadExecutor()</code></td><td>Pool à un seul thread (exécution séquentielle)</td></tr>
+        <tr><td><code>submit(Runnable)</code></td><td>Soumet une tâche au pool</td></tr>
+        <tr><td><code>shutdown()</code></td><td>Arrêt propre : termine les tâches en cours, refuse les nouvelles</td></tr>
+        <tr><td><code>shutdownNow()</code></td><td>Arrêt immédiat : interrompt les tâches</td></tr>
+        <tr><td><code>awaitTermination(timeout, unit)</code></td><td>Attend la fin de toutes les tâches</td></tr>
+    </table>
+
+    <h3>4.4 — Arrêt propre du pool</h3>
+
+    <p>
+        Un pool non arrêté maintient ses threads actifs, ce qui
+        <strong>empêche la JVM de se terminer</strong> après la fin
+        de <code>main</code>. Il faut explicitement appeler
+        <code>shutdown()</code>.
+    </p>
+
+    <p>
+        La manière la plus robuste est d'utiliser un
+        <em>shutdown hook</em> : un thread enregistré auprès de la
+        JVM, exécuté automatiquement à l'arrêt (Ctrl+C, fin de
+        programme).
+    </p>
+
+<pre><code>Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+    System.out.println("arrêt en cours…");
+    pool.shutdown();
+    try {
+        if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
+            pool.shutdownNow();
+        }
+    } catch (InterruptedException e) {
+        pool.shutdownNow();
+    }
+}));</code></pre>
+
+    <div class="exercise">
+        <span class="level medium">TP 4 — 25 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Migrer le serveur multi-clients vers un pool de threads,
+            et observer le comportement quand le nombre de clients
+            dépasse le nombre de threads du pool.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Créer <code>ServeurPool.java</code> à partir de
+                <code>ServeurMulti.java</code>.</li>
+            <li>Remplacer <code>new Thread(handler).start()</code>
+                par <code>pool.submit(handler)</code>.</li>
+            <li>Créer le pool avec
+                <code>Executors.newFixedThreadPool(4)</code>.</li>
+            <li>Ajouter un shutdown hook qui appelle
+                <code>pool.shutdown()</code> puis
+                <code>server.close()</code>.</li>
+            <li>Tester avec 6 clients simultanés.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Avec 4 threads dans le pool et 6 clients, que se
+                passe-t-il pour les clients 5 et 6 ? Sont-ils
+                rejetés ? En attente ?</li>
+            <li>Que se passe-t-il quand un client se déconnecte ?
+                Un client en attente est-il servi ?</li>
+            <li>Le serveur accepte-t-il toujours les connexions,
+                même si le pool est saturé ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Dans quel cas vaut-il mieux augmenter le nombre de
+            threads du pool ? Quels facteurs limitent ce nombre en
+            pratique (nature des tâches, mémoire, CPU) ? Quelle
+            différence y a-t-il entre <code>shutdown()</code> et
+            <code>shutdownNow()</code> ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 5 — SYNCHRONISATION
+============================================================ -->
+<section id="seq5">
+    <span class="sequence">Séquence 5</span>
+    <h2>5. Synchronisation et broadcast</h2>
+
+    <h3>5.1 — Le problème de la section critique</h3>
+
+    <p>
+        Tant que les threads ne partagent rien, tout va bien. Les
+        problèmes commencent dès qu'ils accèdent à une même
+        structure de données. On parle de <strong>section
+        critique</strong> : un bloc de code qui accède à une
+        ressource partagée et qui ne doit être exécuté que par
+        <strong>un seul thread à la fois</strong>.
+    </p>
+
+    <p>
+        Reprenons l'exemple du compteur de clients. L'opération
+        <code>nbClients++</code> semble atomique, mais elle se
+        décompose en réalité en trois instructions machine :
+    </p>
+    <ol>
+        <li>lire la valeur de <code>nbClients</code> en mémoire ;</li>
+        <li>incrémenter cette valeur dans un registre du
+            processeur ;</li>
+        <li>écrire la nouvelle valeur en mémoire.</li>
+    </ol>
+
+    <p>
+        Si deux threads exécutent <code>nbClients++</code> en
+        même temps, ils peuvent s'entrelacer : les deux lisent
+        <code>5</code>, les deux incrémentent à <code>6</code>,
+        les deux écrivent <code>6</code>. Le compteur a augmenté
+        de <strong>1</strong> au lieu de <strong>2</strong>.
+    </p>
+
+    <div class="callout important">
+        <strong>Analogie —</strong> deux guichetiers qui tiennent
+        chacun un carnet de comptage différents, mais doivent
+        reporter sur un tableau commun. Si les deux regardent le
+        tableau (qui indique « 5 ») en même temps, puis écrivent
+        chacun « 6 », le tableau indique 6 alors que deux clients
+        ont été servis. L'information d'un des deux est perdue.
+    </div>
+
+    <div class="schema">
+        <h4>Schéma 6 — Accès concurrent à une liste</h4>
+        <canvas id="schemaSectionCritique" width="900" height="380"></canvas>
+        <p class="caption">
+            Deux threads modifient une liste partagée. Sans
+            synchronisation, l'un peut voir un état intermédiaire
+            produit par l'autre, ou produire un état incohérent.
+        </p>
+    </div>
+
+    <h3>5.2 — <code>synchronized</code></h3>
+
+    <p>
+        Java fournit le mot-clé <code>synchronized</code> pour
+        protéger une section critique. Il fonctionne sur le principe
+        d'un <strong>verrou</strong> (lock) : un seul thread à la
+        fois peut détenir le verrou et exécuter le code protégé.
+        Les autres threads qui tentent d'entrer dans la section
+        sont mis en état <code>BLOCKED</code> et attendent.
+    </p>
+
+    <h4>Sur une méthode</h4>
+
+<pre><code>public synchronized void ajouter(PrintWriter out) {
+    clients.add(out);
+}</code></pre>
+
+    <p>
+        Ici, le verrou est posé sur <code>this</code> — l'instance
+        courante. Un seul thread à la fois peut exécuter
+        <code>ajouter</code> sur cette instance.
+    </p>
+
+    <h4>Sur un bloc</h4>
+
+<pre><code>public void ajouter(PrintWriter out) {
+    synchronized (this) {
+        clients.add(out);
+    }
+}</code></pre>
+
+    <p>
+        Cette forme permet de ne protéger que la partie vraiment
+        critique, pas toute la méthode. C'est souvent préférable
+        pour la performance.
+    </p>
+
+    <h4>Sur un objet dédié</h4>
+
+<pre><code>private final Object verrou = new Object();
+
+public void ajouter(PrintWriter out) {
+    synchronized (verrou) {
+        clients.add(out);
+    }
+}</code></pre>
+
+    <p>
+        Cette forme est utile quand plusieurs sections critiques
+        doivent utiliser le <strong>même verrou</strong> sans que
+        ce verrou soit l'instance elle-même.
+    </p>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> deux blocs
+        <code>synchronized</code> sur le <em>même objet</em> ne
+        peuvent pas être exécutés simultanément par deux threads
+        différents. Deux blocs sur des objets différents n'ont
+        aucune relation entre eux. C'est l'erreur la plus fréquente
+        quand on commence à utiliser la synchronisation.
+    </div>
+
+    <h3>5.3 — Le broadcast</h3>
+
+    <p>
+        Un <strong>broadcast</strong> consiste à envoyer un message
+        à tous les clients d'un ensemble. C'est le mécanisme de
+        base d'un serveur de chat, mais aussi de tout système de
+        diffusion (notifications, alertes, etc.).
+    </p>
+
+    <p>
+        Côté Java, cela se traduit par :
+    </p>
+    <ul>
+        <li>maintenir une structure partagée contenant les flux
+            de sortie de tous les clients ;</li>
+        <li>parcourir cette structure à chaque message à diffuser ;</li>
+        <li>écrire dans chaque flux.</li>
+    </ul>
+
+    <p>
+        Cette opération est <strong>doublement critique</strong> :
+        la structure peut être modifiée par d'autres threads
+        pendant le parcours (déconnexions), et deux threads
+        peuvent vouloir diffuser en même temps. Il faut
+        synchroniser.
+    </p>
+
+<pre><code>public class GestionClients {
+    private final List&lt;PrintWriter&gt; clients = new ArrayList&lt;&gt;();
+
+    public synchronized void ajouter(PrintWriter out) {
+        clients.add(out);
+    }
+
+    public synchronized void retirer(PrintWriter out) {
+        clients.remove(out);
+    }
+
+    public synchronized void diffuser(String message) {
+        for (PrintWriter out : clients) {
+            out.println(message);
+            out.flush();
+        }
+    }
+}</code></pre>
+
+    <p>
+        Les trois méthodes sont <code>synchronized</code> sur la
+        même instance de <code>GestionClients</code>. Elles ne
+        peuvent donc pas s'exécuter simultanément : pas de
+        <code>ConcurrentModificationException</code>, pas de
+        message perdu.
+    </p>
+
+    <h4>Limites de cette approche</h4>
+
+    <p>
+        Cette implémentation a un inconvénient : si un client est
+        lent à recevoir, le <code>flush()</code> peut bloquer, et
+        <strong>tout le broadcast est ralenti</strong> pour tous
+        les autres clients. Pour un serveur réel, on préfère
+        généralement des <strong>files d'attente par client</strong>
+        avec un thread d'envoi dédié. C'est une optimisation qui
+        dépasse le cadre de ce cours, mais il faut en connaître
+        l'existence.
+    </p>
+
+    <h3>5.4 — Autres mécanismes de synchronisation</h3>
+
+    <p>
+        <code>synchronized</code> n'est pas le seul outil. Java
+        propose plusieurs structures adaptées à des cas
+        spécifiques :
+    </p>
+
+    <table>
+        <tr><th>Classe</th><th>Usage</th></tr>
+        <tr><td><code>AtomicInteger</code>, <code>AtomicLong</code></td><td>Compteurs atomiques (pas besoin de <code>synchronized</code>)</td></tr>
+        <tr><td><code>CopyOnWriteArrayList</code></td><td>Liste qui se copie à chaque modification (lecture fréquente, écriture rare)</td></tr>
+        <tr><td><code>ConcurrentHashMap</code></td><td>Map thread-safe avec un bon parallélisme</td></tr>
+        <tr><td><code>ReentrantLock</code></td><td>Verrou explicite avec plus de contrôle que <code>synchronized</code></td></tr>
+        <tr><td><code>BlockingQueue</code></td><td>File d'attente avec blocage quand vide/pleine</td></tr>
+    </table>
+
+    <p>
+        Pour le projet de la journée, <code>synchronized</code> sur
+        <code>GestionClients</code> suffit. Les autres mécanismes
+        seront utiles pour des projets plus ambitieux.
+    </p>
+
+    <div class="exercise">
+        <span class="level hard">TP 5 — 25 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Transformer le serveur multi-clients en serveur de chat
+            avec broadcast.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Créer une classe <code>GestionClients</code> avec :
+                <ul>
+                    <li>une liste synchronisée des flux de sortie
+                        (<code>PrintWriter</code>) ;</li>
+                    <li>une méthode <code>ajouter</code> ;</li>
+                    <li>une méthode <code>retirer</code> ;</li>
+                    <li>une méthode <code>diffuser</code> qui envoie
+                        un message à tous les flux.</li>
+                </ul>
+            </li>
+            <li>Modifier <code>ClientHandler</code> pour :
+                <ul>
+                    <li>enregistrer son <code>PrintWriter</code>
+                        auprès de <code>GestionClients</code> à la
+                        connexion ;</li>
+                    <li>le désenregistrer à la déconnexion ;</li>
+                    <li>à chaque message reçu, appeler
+                        <code>diffuser</code> avec
+                        <code>"client X : " + message</code>.</li>
+                </ul>
+            </li>
+            <li>Tester avec 3 clients : un message envoyé par l'un
+                doit apparaître chez tous les autres.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Que se passe-t-il si un client se déconnecte
+                pendant un broadcast ?</li>
+            <li>L'ordre des messages est-il le même chez tous les
+                clients ?</li>
+            <li>Que se passe-t-il si deux clients envoient
+                simultanément ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi la méthode <code>diffuser</code> doit-elle
+            être <code>synchronized</code> ? Que se passerait-il
+            si elle ne l'était pas ? Proposer une stratégie pour
+            gérer proprement la déconnexion d'un client pendant un
+            broadcast.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 6 — NIO
+============================================================ -->
+<section id="seq6">
+    <span class="sequence">Séquence 6</span>
+    <h2>6. NIO en survol</h2>
+
+    <h3>6.1 — Le principe</h3>
+
+    <p>
+        Java propose une seconde API réseau, dite <strong>NIO</strong>
+        (<em>New I/O</em>, apparue avec Java 1.4), fondée sur des
+        <strong>canaux non bloquants</strong> et un
+        <strong>sélecteur</strong>. L'idée est de renverser
+        l'approche : au lieu qu'un thread attende une opération
+        d'E/S, un unique thread surveille plusieurs canaux à la
+        fois et est notifié quand l'un d'eux est prêt.
+    </p>
+
+    <p>
+        Concrètement, au lieu d'avoir un thread par client (chacun
+        bloqué sur son <code>read()</code>), on a <strong>un seul
+        thread</strong> qui interroge le sélecteur pour savoir
+        quels canaux ont des données à lire. Il les lit alors sans
+        jamais bloquer.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 7 — Modèle NIO</h4>
+        <canvas id="schemaNio" width="900" height="340"></canvas>
+        <p class="caption">
+            Un unique thread surveille plusieurs canaux via un
+            sélecteur. Il est notifié quand un canal est prêt à
+            lire ou à écrire, et traite alors uniquement ce canal.
+        </p>
+    </div>
+
+    <h3>6.2 — Classes principales</h3>
+
+    <table>
+        <tr><th>Classe</th><th>Rôle</th></tr>
+        <tr><td><code>ServerSocketChannel</code></td><td>Équivalent NIO de <code>ServerSocket</code></td></tr>
+        <tr><td><code>SocketChannel</code></td><td>Équivalent NIO de <code>Socket</code></td></tr>
+        <tr><td><code>Selector</code></td><td>Surveille plusieurs canaux</td></tr>
+        <tr><td><code>SelectionKey</code></td><td>Événement associé à un canal</td></tr>
+        <tr><td><code>ByteBuffer</code></td><td>Tampon de lecture/écriture</td></tr>
+    </table>
+
+    <h3>6.3 — Quand utiliser NIO ?</h3>
+
+    <table>
+        <tr><th>Situation</th><th>Approche recommandée</th></tr>
+        <tr><td>Quelques dizaines de clients</td><td>Threads</td></tr>
+        <tr><td>Centaines de clients, peu d'activité par client</td><td>NIO</td></tr>
+        <tr><td>Milliers de clients</td><td>NIO + frameworks spécialisés (Netty)</td></tr>
+    </table>
+
+    <div class="callout important">
+        <strong>Remarque —</strong> NIO est puissant mais complexe.
+        Pour cette formation, on se contente de le situer : il
+        existe une alternative aux threads, plus efficace pour un
+        grand nombre de connexions peu actives. Les frameworks
+        industriels (Netty, Vert.x) l'utilisent en interne.
+    </div>
+</section>
+
+<!-- ============================================================
+     PIEGES
+============================================================ -->
+<section id="pieges">
+    <h2>7. Pièges et erreurs courantes</h2>
+
+    <p>
+        Cette section recense les erreurs les plus fréquentes
+        rencontrées par les étudiants lors de l'écriture de
+        programmes réseau multi-thread en Java. Chaque piège est
+        présenté sous la forme <em>symptôme → cause → remède</em>.
+    </p>
+
+    <h3>7.1 — Appeler <code>run()</code> au lieu de <code>start()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le code du thread s'exécute,
+        mais séquentiellement, dans le thread principal. Le
+        programme se bloque comme si on n'avait pas mis de thread
+        du tout.
+        <p>
+            <strong>Cause —</strong> <code>run()</code> est une
+            méthode ordinaire. L'appeler directement exécute le
+            code dans le thread courant, pas dans un nouveau
+            thread. Seul <code>start()</code> crée un nouveau
+            thread.
+        </p>
+        <p>
+            <strong>Remède —</strong> toujours <code>start()</code>.
+        </p>
+    </div>
+
+    <h3>7.2 — Oublier <code>join()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le programme principal se
+        termine avant les threads lancés, ou les résultats ne
+        sont pas encore affichés.
+        <p>
+            <strong>Cause —</strong> les threads non-démons sont
+            interrompus à la fin de la JVM. Si <code>main</code>
+            se termine, ils n'ont pas le temps de finir.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>join()</code> sur les
+            threads importants, ou <code>awaitTermination()</code>
+            sur le pool.
+        </p>
+    </div>
+
+    <h3>7.3 — Fermer le socket dans le mauvais thread</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>SocketException: Socket closed</code> dans un thread
+        de traitement.
+        <p>
+            <strong>Cause —</strong> le thread principal (ou un
+            autre thread) a fermé le socket pendant que le thread
+            de traitement l'utilisait encore.
+        </p>
+        <p>
+            <strong>Remède —</strong> chaque thread ferme les
+            sockets dont il est responsable. Le thread principal
+            ne ferme que le <code>ServerSocket</code>.
+        </p>
+    </div>
+
+    <h3>7.4 — <code>ConcurrentModificationException</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> exception levée lors d'un
+        broadcast, si un client se déconnecte en même temps.
+        <p>
+            <strong>Cause —</strong> parcours d'une liste pendant
+            qu'un autre thread la modifie.
+        </p>
+        <p>
+            <strong>Remède —</strong> synchroniser l'ajout, le
+            retrait et le parcours ; ou utiliser
+            <code>CopyOnWriteArrayList</code>.
+        </p>
+    </div>
+
+    <h3>7.5 — <code>synchronized</code> sur le mauvais objet</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> la protection ne fonctionne
+        pas, malgré la présence de <code>synchronized</code>.
+        <p>
+            <strong>Cause —</strong> deux blocs
+            <code>synchronized</code> sur deux objets différents ne
+            se bloquent pas mutuellement. Si les threads accèdent
+            à la même ressource via deux verrous distincts, il n'y
+            a aucune exclusion.
+        </p>
+        <p>
+            <strong>Remède —</strong> tous les accès à la
+            ressource partagée doivent utiliser le
+            <strong>même</strong> verrou.
+        </p>
+    </div>
+
+    <h3>7.6 — Deadlock</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le programme se fige, plus
+        rien n'avance.
+        <p>
+            <strong>Cause —</strong> deux threads attendent chacun
+            un verrou détenu par l'autre.
+        </p>
+        <p>
+            <strong>Remède —</strong> ordre strict d'acquisition
+            des verrous, ou un seul verrou.
+        </p>
+    </div>
+
+    <h3>7.7 — Thread non-démon qui bloque la JVM</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> la JVM ne se termine pas, même
+        après <code>main</code>.
+        <p>
+            <strong>Cause —</strong> des threads de traitement sont
+            encore actifs. La JVM attend qu'ils terminent.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>setDaemon(true)</code>
+            pour les threads auxiliaires, ou
+            <code>shutdown()</code> explicite du pool.
+        </p>
+    </div>
+
+    <h3>7.8 — Pool non arrêté</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> la JVM ne se termine pas après
+        <code>main</code>.
+        <p>
+            <strong>Cause —</strong> <code>ExecutorService</code>
+            non arrêté maintient ses threads actifs.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>pool.shutdown()</code>
+            dans un bloc <code>finally</code> ou un shutdown hook.
+        </p>
+    </div>
+
+    <h3>7.9 — Broadcast non synchronisé</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> messages perdus, ordre
+        incohérent chez certains clients.
+        <p>
+            <strong>Cause —</strong> deux threads écrivent en même
+            temps dans le même <code>PrintWriter</code> ou
+            parcourent la liste sans verrou.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>synchronized</code> sur
+            la méthode de diffusion, ou verrou par flux de sortie.
+        </p>
+    </div>
+
+    <h3>7.10 — Exception silencieuse dans un thread</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un client déconnecté n'apparaît
+        pas dans les logs, la liste des clients reste fausse.
+        <p>
+            <strong>Cause —</strong> une exception non gérée dans
+            <code>run()</code> termine le thread silencieusement
+            sans exécuter le nettoyage.
+        </p>
+        <p>
+            <strong>Remède —</strong> <code>try/catch/finally</code>
+            dans <code>run()</code>, avec retrait de la liste dans
+            <code>finally</code>.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     BILAN
+============================================================ -->
+<section id="bilan">
+    <h2>8. À retenir — Jour 2</h2>
+
+    <div class="callout success">
+        <ul>
+            <li><code>accept()</code> et <code>read()</code> sont
+                bloquants : un programme séquentiel ne peut traiter
+                qu'un seul client à la fois.</li>
+            <li>Bloquer ne consomme pas de CPU : le thread est
+                simplement suspendu.</li>
+            <li>Un thread est une unité d'exécution concurrente
+                dans un processus. On le crée avec
+                <code>new Thread(Runnable)</code> et on le démarre
+                avec <code>start()</code>.</li>
+            <li>Un échange non bloquant peut se faire par deux
+                threads : un qui lit, un qui écrit.</li>
+            <li>Un serveur multi-clients par thread accepte une
+                connexion puis délègue son traitement à un thread.</li>
+            <li>Un pool de threads (<code>ExecutorService</code>)
+                borne le nombre de threads actifs et réutilise les
+                threads terminés.</li>
+            <li>Une section critique se protège par
+                <code>synchronized</code>, sur un verrou unique.</li>
+            <li>Le broadcast consiste à envoyer un message à tous
+                les clients d'un ensemble. Il doit être
+                synchronisé.</li>
+            <li>NIO (<code>Selector</code>, <code>Channel</code>)
+                propose un modèle événementiel à un seul thread,
+                adapté à un grand nombre de connexions peu actives.</li>
+        </ul>
+    </div>
+
+    <h3>Travail à remettre pour le Jour 2</h3>
+
+    <p>
+        Le travail de la journée est vérifié en séance. Le travail
+        à domicile est un <strong>projet de synthèse</strong> à
+        rendre pour le Jour 3.
+    </p>
+
+<pre><code>jour2/
+│
+├── ServeurMulti.java
+├── ClientHandler.java
+├── ServeurPool.java
+├── ServeurChat.java
+└── GestionClients.java</code></pre>
+
+    <h3>Projet à domicile — Serveur multi-clients avec groupes</h3>
+
+    <div class="exercise">
+        <span class="level hard">TP maison</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Concevoir et implémenter un serveur de messagerie
+            multi-clients où les clients sont répartis en
+            <strong>groupes</strong>. Un message envoyé dans un
+            groupe est diffusé uniquement aux membres de ce groupe.
+        </p>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Fonctionnalités attendues</h4>
+        <ul>
+            <li>Au démarrage, un client choisit un pseudo et un
+                groupe (par exemple via une commande
+                <code>/join nom_groupe</code>).</li>
+            <li>Un message envoyé par un client est diffusé aux
+                membres de son groupe uniquement.</li>
+            <li>Un client peut quitter son groupe
+                (<code>/leave</code>) et en rejoindre un autre.</li>
+            <li>Un client peut afficher la liste des membres de son
+                groupe (<code>/who</code>).</li>
+            <li>Un client peut se déconnecter proprement
+                (<code>/quit</code>).</li>
+        </ul>
+
+        <h4>Contraintes techniques</h4>
+        <ul>
+            <li>Utiliser un pool de threads
+                (<code>ExecutorService</code>).</li>
+            <li>Protéger toutes les structures partagées par
+                <code>synchronized</code> ou des collections
+                concurrentes.</li>
+            <li>Gérer les déconnexions propres et brutales sans
+                planter.</li>
+            <li>Prévoir un timeout sur les lectures.</li>
+            <li>Prévoir un arrêt propre du serveur.</li>
+        </ul>
+
+        <h4>Livrables</h4>
+        <ul>
+            <li>Le code source complet du serveur.</li>
+            <li>Le code source d'un client de test (menu texte).</li>
+            <li>Un court document (1 page) précisant :
+                <ul>
+                    <li>le protocole applicatif retenu
+                        (commandes, format des messages) ;</li>
+                    <li>la structure des données côté serveur
+                        (groupes, membres) ;</li>
+                    <li>les choix de synchronisation.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h4>Critères d'évaluation</h4>
+        <table>
+            <tr><th>Critère</th><th>Poids</th></tr>
+            <tr><td>Fonctionnalité complète (groupes, broadcast, commandes)</td><td>40 %</td></tr>
+            <tr><td>Robustesse (déconnexions, exceptions, timeouts)</td><td>25 %</td></tr>
+            <tr><td>Qualité de la synchronisation</td><td>20 %</td></tr>
+            <tr><td>Clarté du document de conception</td><td>15 %</td></tr>
+        </table>
+
+        <h3>Pistes de conception</h3>
+        <p>
+            Le cahier des charges ne précise pas le protocole. À
+            vous de le concevoir. Quelques questions à trancher :
+        </p>
+        <ul>
+            <li>Les commandes sont-elles textuelles
+                (<code>/join</code>) ou structurées
+                (<code>JOIN|groupe</code>) ?</li>
+            <li>Le serveur confirme-t-il chaque commande ?</li>
+            <li>Que se passe-t-il si un client envoie un message
+                sans avoir rejoint de groupe ?</li>
+            <li>Que se passe-t-il si un groupe est vide ? Est-il
+                supprimé ?</li>
+        </ul>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <p><strong>Programmation Réseau — Jour 2</strong></p>
+    <p>Serveur multi-clients et communication non bloquante</p>
+    <p>Java 11+ · java.util.concurrent · Wireshark</p>
+</footer>
+
+<!-- ============================================================
+     SCHÉMAS CANVAS — FOND BLANC, CONTRASTE ÉLEVÉ
+============================================================ -->
+<script>
+(function () {
+    "use strict";
+
+    // Palette fond blanc
+    const BG          = "#ffffff";
+    const TXT_MAIN    = "#1a1a1a";
+    const TXT_DIM     = "#4a5568";
+    const TXT_ACCENT  = "#8a6508";   // or foncé
+    const TXT_CYAN    = "#2c5282";   // bleu foncé
+    const TXT_GREEN   = "#2f6b3a";   // vert foncé
+    const TXT_RED     = "#8b2c2c";   // rouge foncé
+    const BOX_FILL    = "#eef1f5";
+    const BOX_FILL_ACCENT = "#fdf8ee";
+    const BOX_FILL_GREEN  = "#eef6ee";
+    const BOX_FILL_RED    = "#f8eeee";
+    const BOX_FILL_BLUE   = "#eef4fa";
+    const BOX_STROKE  = "#4a5568";
+    const ARROW       = "#2c5282";
+
+    function setup(id) {
+        const c = document.getElementById(id);
+        if (!c) return null;
+        return { c, ctx: c.getContext("2d"), w: c.width, h: c.height };
+    }
+
+    function fond(ctx, w, h) {
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    function boite(ctx, x, y, bw, bh, label, fondCouleur, texteCouleur) {
+        ctx.fillStyle = fondCouleur || BOX_FILL;
+        ctx.strokeStyle = BOX_STROKE;
+        ctx.lineWidth = 2;
+        ctx.fillRect(x, y, bw, bh);
+        ctx.strokeRect(x, y, bw, bh);
+        ctx.fillStyle = texteCouleur || TXT_MAIN;
+        ctx.font = "bold 14px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        const lignes = label.split("\n");
+        const dy = (lignes.length - 1) * 8;
+        lignes.forEach((l, i) => ctx.fillText(l, x + bw / 2, y + bh / 2 + 5 + i * 16 - dy));
+        ctx.textAlign = "left";
+        return { x, y, w: bw, h: bh };
+    }
+
+    function fleche(ctx, x1, y1, x2, y2, couleur, epaisseur) {
+        ctx.strokeStyle = couleur || ARROW;
+        ctx.lineWidth = epaisseur || 2.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.fillStyle = couleur || ARROW;
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - 12 * Math.cos(angle - 0.4), y2 - 12 * Math.sin(angle - 0.4));
+        ctx.lineTo(x2 - 12 * Math.cos(angle + 0.4), y2 - 12 * Math.sin(angle + 0.4));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    /* ---------- Schéma 1 : blocage dans accept() ---------- */
+    const s1 = setup("schemaBlocage");
+    if (s1) {
+        const { ctx, w, h } = s1;
+        fond(ctx, w, h);
+
+        const srv = boite(ctx, 60, 150, 210, 70, "SERVEUR\n(traitement A)");
+        const connA = boite(ctx, 400, 60, 200, 60, "Client A\n(traité)", BOX_FILL_GREEN, TXT_GREEN);
+        const connB = boite(ctx, 400, 220, 200, 60, "Client B\n(en attente)", BOX_FILL_ACCENT, TXT_ACCENT);
+
+        fleche(ctx, srv.x + srv.w, srv.y + 25, connA.x, connA.y + connA.h - 10, TXT_GREEN);
+        fleche(ctx, srv.x + srv.w, srv.y + srv.h - 25, connB.x, connB.y + connB.h - 10, TXT_RED);
+
+        ctx.fillStyle = TXT_CYAN;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("en cours", (srv.x + srv.w + connA.x) / 2, 45);
+        ctx.fillStyle = TXT_RED;
+        ctx.fillText("bloqué : pas d'accept()", (srv.x + srv.w + connB.x) / 2, h - 40);
+        ctx.textAlign = "left";
+
+        // File du système
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 13px 'Consolas', monospace";
+        ctx.fillText("file du système", 660, 200);
+        ctx.strokeStyle = BOX_STROKE;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(650, 215, 60, 70);
+    }
+
+    /* ---------- Schéma 2 : états d'un thread ---------- */
+    const s2 = setup("schemaThread");
+    if (s2) {
+        const { ctx, w, h } = s2;
+        fond(ctx, w, h);
+
+        const states = [
+            { x: 60,  y: 40,  label: "NEW" },
+            { x: 380, y: 40,  label: "RUNNABLE", fill: BOX_FILL_GREEN, txt: TXT_GREEN },
+            { x: 700, y: 40,  label: "TERMINATED", fill: BOX_FILL_RED, txt: TXT_RED },
+            { x: 380, y: 190, label: "BLOCKED", fill: BOX_FILL_ACCENT, txt: TXT_ACCENT },
+            { x: 380, y: 320, label: "WAITING", fill: BOX_FILL_BLUE, txt: TXT_CYAN },
+            { x: 700, y: 190, label: "TIMED_WAITING", fill: BOX_FILL_BLUE, txt: TXT_CYAN }
+        ];
+
+        const boxes = {};
+        states.forEach(s => {
+            boxes[s.label] = boite(ctx, s.x, s.y, 175, 55, s.label, s.fill, s.txt);
+        });
+
+        fleche(ctx, boxes["NEW"].x + boxes["NEW"].w, 67,
+               boxes["RUNNABLE"].x, 67, ARROW);
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("start()", 260, 55);
+
+        fleche(ctx, boxes["RUNNABLE"].x + boxes["RUNNABLE"].w, 67,
+               boxes["TERMINATED"].x, 67, ARROW);
+        ctx.fillText("run() finit", 580, 55);
+
+        fleche(ctx, boxes["RUNNABLE"].x + boxes["RUNNABLE"].w / 2, boxes["RUNNABLE"].y + boxes["RUNNABLE"].h,
+               boxes["BLOCKED"].x + boxes["BLOCKED"].w / 2, boxes["BLOCKED"].y, ARROW);
+        ctx.fillText("verrou", boxes["RUNNABLE"].x + boxes["RUNNABLE"].w / 2 + 55, 165);
+
+        fleche(ctx, boxes["RUNNABLE"].x + boxes["RUNNABLE"].w / 2 - 20, boxes["RUNNABLE"].y + boxes["RUNNABLE"].h,
+               boxes["WAITING"].x + boxes["WAITING"].w / 2 - 20, boxes["WAITING"].y, ARROW);
+        ctx.fillText("wait / join", boxes["RUNNABLE"].x + boxes["RUNNABLE"].w / 2 - 90, 285);
+
+        fleche(ctx, boxes["BLOCKED"].x + boxes["BLOCKED"].w, boxes["BLOCKED"].y + boxes["BLOCKED"].h / 2,
+               boxes["TIMED_WAITING"].x, boxes["TIMED_WAITING"].y + boxes["TIMED_WAITING"].h / 2, ARROW);
+        ctx.fillText("sleep(ms)", 640, 210);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma 3 : non bloquant par deux threads ---------- */
+    const s3 = setup("schemaNonBloquant");
+    if (s3) {
+        const { ctx, w, h } = s3;
+        fond(ctx, w, h);
+
+        const socket = boite(ctx, w / 2 - 100, 40, 200, 55, "Socket partagé");
+        const threadL = boite(ctx, 100, 200, 240, 70, "Thread lecture\n(read() → affiche)", BOX_FILL_BLUE, TXT_CYAN);
+        const threadE = boite(ctx, w - 340, 200, 240, 70, "Thread écriture\n(clavier → write())", BOX_FILL_BLUE, TXT_CYAN);
+
+        fleche(ctx, threadL.x + threadL.w / 2, threadL.y,
+               socket.x + 50, socket.y + socket.h, ARROW);
+        fleche(ctx, threadE.x + threadE.w / 2, threadE.y,
+               socket.x + socket.w - 50, socket.y + socket.h, ARROW);
+
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("boucle", 220, 290);
+        ctx.fillText("boucle", w - 220, 290);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma 4 : multi-clients par thread ---------- */
+    const s4 = setup("schemaMultiClients");
+    if (s4) {
+        const { ctx, w, h } = s4;
+        fond(ctx, w, h);
+
+        const main = boite(ctx, 40, 170, 220, 70, "Thread principal\n(accept en boucle)");
+        const c1 = boite(ctx, 400, 40, 200, 60, "Thread client 1", BOX_FILL_BLUE, TXT_CYAN);
+        const c2 = boite(ctx, 400, 150, 200, 60, "Thread client 2", BOX_FILL_BLUE, TXT_CYAN);
+        const c3 = boite(ctx, 400, 260, 200, 60, "Thread client 3", BOX_FILL_BLUE, TXT_CYAN);
+        const clients = boite(ctx, 720, 150, 150, 60, "Clients\nréseau", BOX_FILL_GREEN, TXT_GREEN);
+
+        [c1, c2, c3].forEach(c => {
+            fleche(ctx, main.x + main.w, main.y + 35, c.x, c.y + c.h / 2, ARROW);
+            fleche(ctx, c.x + c.w, c.y + c.h / 2, clients.x, clients.y + clients.h / 2, TXT_GREEN);
+        });
+    }
+
+    /* ---------- Schéma 5 : pool de threads ---------- */
+    const s5 = setup("schemaPool");
+    if (s5) {
+        const { ctx, w, h } = s5;
+        fond(ctx, w, h);
+
+        const file = boite(ctx, 60, 140, 230, 70, "File des tâches\n(connexions)", BOX_FILL_ACCENT, TXT_ACCENT);
+
+        const threads = [];
+        for (let i = 0; i < 4; i++) {
+            threads.push(boite(ctx, 380, 30 + i * 75, 220, 55, "Thread " + (i + 1), BOX_FILL_BLUE, TXT_CYAN));
+        }
+
+        threads.forEach(t => {
+            fleche(ctx, file.x + file.w, file.y + file.h / 2, t.x, t.y + t.h / 2, TXT_GREEN);
+        });
+
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 13px 'Consolas', monospace";
+        ctx.fillText("pool fixe de 4 threads", 380, 340);
+    }
+
+    /* ---------- Schéma 6 : section critique ---------- */
+    const s6 = setup("schemaSectionCritique");
+    if (s6) {
+        const { ctx, w, h } = s6;
+        fond(ctx, w, h);
+
+        const t1 = boite(ctx, 60, 60, 210, 70, "Thread 1");
+        const t2 = boite(ctx, 60, 260, 210, 70, "Thread 2");
+        const liste = boite(ctx, 500, 160, 240, 90, "Liste partagée\n(clients)", BOX_FILL_ACCENT, TXT_ACCENT);
+
+        fleche(ctx, t1.x + t1.w, t1.y + t1.h / 2, liste.x, liste.y + 25, ARROW);
+        fleche(ctx, t2.x + t2.w, t2.y + t2.h / 2, liste.x, liste.y + liste.h - 25, ARROW);
+
+        ctx.fillStyle = TXT_RED;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("sans synchronized → incohérence", w / 2, 355);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma 7 : NIO ---------- */
+    const s7 = setup("schemaNio");
+    if (s7) {
+        const { ctx, w, h } = s7;
+        fond(ctx, w, h);
+
+        const thread = boite(ctx, 60, 140, 200, 70, "Thread unique");
+        const selector = boite(ctx, 350, 140, 170, 70, "Selector", BOX_FILL_BLUE, TXT_CYAN);
+        const c1 = boite(ctx, 620, 20, 220, 55, "Channel 1", BOX_FILL_GREEN, TXT_GREEN);
+        const c2 = boite(ctx, 620, 95, 220, 55, "Channel 2", BOX_FILL_GREEN, TXT_GREEN);
+        const c3 = boite(ctx, 620, 170, 220, 55, "Channel 3", BOX_FILL_GREEN, TXT_GREEN);
+        const c4 = boite(ctx, 620, 245, 220, 55, "Channel 4", BOX_FILL_GREEN, TXT_GREEN);
+
+        fleche(ctx, thread.x + thread.w, thread.y + thread.h / 2,
+               selector.x, selector.y + selector.h / 2, ARROW);
+
+        [c1, c2, c3, c4].forEach(c => {
+            fleche(ctx, selector.x + selector.w, selector.y + selector.h / 2,
+                   c.x, c.y + c.h / 2, TXT_GREEN);
+        });
+    }
+})();
+</script>
+
+</body>
+</html>
