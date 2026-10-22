@@ -1,0 +1,3 @@
+public enum Etat {
+    CONNECTE, AUTHENTIFIE, TRANSFERANT, TERMINE
+}

@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmation Réseau — Jour 3 : Protocoles applicatifs et échange de fichiers</title>
+<style>
+:root {
+    --primary: #1a2b4a;
+    --accent: #2c5282;
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --border: #c8c8c8;
+    --code-bg: #f4f4f0;
+    --code-border: #d0d0c8;
+    --callout-bg: #fdfaf2;
+    --callout-border: #b8860b;
+    --info-bg: #f2f6fa;
+    --info-border: #2c5282;
+    --success-bg: #f2f8f3;
+    --success-border: #2f6b3a;
+    --danger-bg: #faf3f3;
+    --danger-border: #8b2c2c;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12pt;
+    line-height: 1.6;
+}
+header {
+    background: var(--primary);
+    color: #ffffff;
+    padding: 45px 25px 35px;
+    border-bottom: 3px solid #0f1a30;
+}
+.header-content { max-width: 1050px; margin: auto; }
+header h1 { font-size: 1.9rem; margin: 0 0 6px; font-weight: 700; }
+header h2 {
+    color: #d8e0ec; border: none; margin: 0 0 16px;
+    font-weight: 400; font-size: 1.15rem; font-style: italic;
+}
+header p { font-size: 1rem; max-width: 760px; color: #e8edf4; }
+.badge {
+    display: inline-block; background: transparent;
+    border: 1px solid #8fa3c0; padding: 3px 10px; border-radius: 2px;
+    margin: 3px 6px 3px 0; font-size: 0.75rem;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.6px; text-transform: uppercase; color: #d8e0ec;
+}
+nav {
+    position: sticky; top: 0; z-index: 100;
+    background: #0f1a30; border-bottom: 1px solid #2a3a55;
+}
+.nav-content {
+    max-width: 1050px; margin: auto;
+    display: flex; overflow-x: auto; gap: 0; padding: 4px 10px;
+}
+nav a {
+    color: #c8d4e4; text-decoration: none; padding: 9px 13px;
+    white-space: nowrap; font-size: 0.82rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+}
+nav a:hover { color: #ffffff; border-bottom-color: #8fa3c0; }
+main { max-width: 1050px; margin: auto; padding: 35px 20px; }
+section {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 28px 32px; margin-bottom: 24px;
+}
+h2 {
+    color: var(--primary); font-size: 1.35rem; font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin-top: 0; margin-bottom: 18px;
+}
+h3 {
+    color: #2a3a55; margin-top: 26px; margin-bottom: 10px;
+    font-weight: 700; font-size: 1.05rem;
+}
+h4 {
+    color: var(--accent); font-weight: 700;
+    margin-bottom: 6px; margin-top: 18px; font-size: 1rem;
+}
+p { margin: 12px 0; }
+ul, ol { padding-left: 28px; }
+li { margin: 6px 0; }
+.callout {
+    padding: 16px 22px; margin: 18px 0; border-left: 3px solid;
+}
+.callout.objectifs { background: var(--info-bg); border-color: var(--info-border); }
+.callout.important { background: var(--callout-bg); border-color: var(--callout-border); }
+.callout.info { background: var(--info-bg); border-color: var(--info-border); }
+.callout.success { background: var(--success-bg); border-color: var(--success-border); }
+.callout.danger { background: var(--danger-bg); border-color: var(--danger-border); }
+pre {
+    background: var(--code-bg); color: #1a1a1a;
+    padding: 16px 20px; border: 1px solid var(--code-border);
+    overflow-x: auto;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.85rem; line-height: 1.55; margin: 14px 0;
+}
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eeeeea; color: #1a1a1a;
+    padding: 1px 5px; font-size: 0.88em; border: 1px solid #dcdcd6;
+}
+pre code { background: transparent; border: none; padding: 0; font-size: 0.85rem; }
+table {
+    width: 100%; border-collapse: collapse;
+    margin: 18px 0; font-size: 0.95rem;
+}
+th, td {
+    border: 1px solid var(--border); padding: 9px 12px;
+    text-align: left; vertical-align: top;
+}
+th { background: #eef1f5; color: #1a2b4a; font-weight: 700; }
+tr:nth-child(even) { background: #fafaf8; }
+.exercise {
+    border: 1px solid #a0a0a0; border-left: 3px solid var(--primary);
+    background: #fcfcfa; padding: 18px 22px; margin: 20px 0;
+}
+.level {
+    display: inline-block; padding: 2px 10px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;
+    border: 1px solid; margin-bottom: 8px;
+}
+.easy { background: #eef6ee; color: #2f6b3a; border-color: #2f6b3a; }
+.medium { background: #fdf8ee; color: #8a6508; border-color: #8a6508; }
+.hard { background: #f8eeee; color: #8b2c2c; border-color: #8b2c2c; }
+.schema {
+    margin: 22px 0 26px; border: 1px solid #b9c2cf;
+    background: #fbfcfd; padding: 16px;
+}
+.schema h4 { margin-top: 0; }
+.schema canvas {
+    display: block; width: 100%; height: auto;
+    background: #ffffff; border: 1px solid #dbe1e8; margin: 8px 0;
+}
+.schema .caption {
+    margin: 10px 0 0; color: #4a5568;
+    font-size: .92rem; text-align: center;
+}
+.sequence {
+    display: inline-block; padding: 3px 10px;
+    background: var(--primary); color: #ffffff;
+    font-size: 0.75rem; font-weight: 700;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: 6px; border-radius: 2px;
+}
+footer {
+    background: #1a2b4a; color: #c8d4e4;
+    text-align: center; padding: 28px 20px; margin-top: 30px;
+    font-size: 0.85rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-top: 3px solid #0f1a30;
+}
+footer p { margin: 4px 0; }
+@media (max-width: 700px) {
+    header h1 { font-size: 1.4rem; }
+    header h2 { font-size: 1rem; }
+    section { padding: 20px 18px; }
+    pre { font-size: 0.78rem; }
+    h2 { font-size: 1.15rem; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-content">
+        <span class="badge">Programmation Réseau</span>
+        <span class="badge">Jour 3 / 11</span>
+        <span class="badge">Java</span>
+        <span class="badge">Protocoles</span>
+
+        <h1>Jour 3 — Protocoles applicatifs et échange de fichiers</h1>
+        <h2>Format binaire, machine à états, fragmentation, intégrité</h2>
+
+        <p>
+            Cette troisième journée abandonne les protocoles ad hoc
+            (lignes de texte, écho) pour concevoir de véritables
+            protocoles applicatifs : un format binaire précis, un
+            en-tête avec type et longueur, une machine à états côté
+            serveur, puis le transfert de fichiers par chunks avec
+            vérification d'intégrité et reprise sur incident.
+        </p>
+
+        <p>
+            <strong>Durée :</strong> 10 heures &nbsp;|&nbsp;
+            <strong>Prérequis :</strong> Jours 1 et 2 (sockets,
+            threads, synchronisation)
+        </p>
+    </div>
+</header>
+
+<nav>
+    <div class="nav-content">
+        <a href="#objectifs">Objectifs</a>
+        <a href="#seq1">Séq. 1 — Protocole</a>
+        <a href="#seq2">Séq. 2 — Binaire</a>
+        <a href="#seq3">Séq. 3 — En-tête</a>
+        <a href="#seq4">Séq. 4 — Machine à états</a>
+        <a href="#seq5">Séq. 5 — Fichiers</a>
+        <a href="#seq6">Séq. 6 — Intégrité</a>
+        <a href="#seq7">Séq. 7 — Reprise</a>
+        <a href="#pieges">Pièges</a>
+        <a href="#bilan">Bilan</a>
+    </div>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     1. OBJECTIFS
+============================================================ -->
+<section id="objectifs">
+    <h2>1. Objectifs pédagogiques</h2>
+
+    <div class="callout objectifs">
+        <p>À l'issue de cette troisième journée, l'étudiant doit être capable de :</p>
+        <ul>
+            <li>expliquer pourquoi un protocole textuel ne suffit pas
+                pour des échanges structurés ;</li>
+            <li>concevoir un format de message binaire avec en-tête
+                (type, longueur, identifiant) ;</li>
+            <li>utiliser <code>DataInputStream</code> et
+                <code>DataOutputStream</code> pour lire et écrire des
+                types primitifs ;</li>
+            <li>implémenter une machine à états côté serveur pour
+                gérer une session ;</li>
+            <li>découper un fichier en chunks, les transmettre, les
+                réassembler ;</li>
+            <li>calculer et vérifier un SHA-256 par chunk et sur le
+                fichier complet ;</li>
+            <li>implémenter une reprise sur incident (reprise après
+                déconnexion) ;</li>
+            <li>identifier les pièges classiques d'un protocole
+                binaire (endianness, tailles, flux partiels).</li>
+        </ul>
+    </div>
+
+    <h3>Organisation de la journée</h3>
+    <table>
+        <tr><th>Séquence</th><th>Type</th><th>Durée</th></tr>
+        <tr><td>1 — Pourquoi un protocole applicatif</td><td>Théorie + micro-TP</td><td>0 h 45</td></tr>
+        <tr><td>2 — Format binaire</td><td>Théorie + micro-TP</td><td>1 h 15</td></tr>
+        <tr><td>3 — En-tête de message</td><td>Théorie + micro-TP</td><td>1 h 15</td></tr>
+        <tr><td>4 — Machine à états</td><td>Théorie + TP</td><td>1 h 30</td></tr>
+        <tr><td>5 — Échange de fichiers</td><td>Théorie + TP</td><td>1 h 30</td></tr>
+        <tr><td>6 — Intégrité (SHA-256)</td><td>Théorie + TP</td><td>1 h 30</td></tr>
+        <tr><td>7 — Reprise sur incident</td><td>Théorie + TP</td><td>1 h 00</td></tr>
+        <tr><td>Pièges et synthèse</td><td>Bilan</td><td>0 h 45</td></tr>
+        <tr><td>Battement, debug, questions</td><td></td><td>0 h 30</td></tr>
+    </table>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 1 — POURQUOI UN PROTOCOLE
+============================================================ -->
+<section id="seq1">
+    <span class="sequence">Séquence 1</span>
+    <h2>1. Pourquoi un protocole applicatif</h2>
+
+    <h3>1.1 — Ce qu'on a fait jusqu'ici, et ses limites</h3>
+
+    <p>
+        Aux Jours 1 et 2, on a échangé des messages en texte brut :
+        <code>"add 3 5"</code>, <code>"Bonjour serveur"</code>,
+        <code>"client X : message"</code>. Cette approche a un
+        avantage évident : elle est lisible par un humain, facile à
+        débugger avec <code>telnet</code> ou Wireshark. Elle a
+        aussi un inconvénient majeur : elle ne <strong>structure
+        pas</strong> les échanges.
+    </p>
+
+    <p>
+        Concrètement, avec du texte, plusieurs questions se posent
+        immédiatement :
+    </p>
+    <ul>
+        <li>Comment distinguer un message d'un autre si le texte
+            contient le séparateur (par exemple un saut de ligne dans
+            un message) ?</li>
+        <li>Comment transmettre des données binaires (une image, un
+            fichier PDF) sans les altérer ?</li>
+        <li>Comment savoir si un message est complet, tronqué, ou
+            suivi d'un autre ?</li>
+        <li>Comment gérer plusieurs types de messages (login,
+            message, déconnexion) sans ambiguïté ?</li>
+    </ul>
+
+    <p>
+        La réponse à toutes ces questions s'appelle un
+        <strong>protocole applicatif</strong> : un ensemble de
+        règles précises qui définissent la forme et l'ordre des
+        messages échangés entre client et serveur.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> un protocole applicatif est
+        comme le formulaire standard d'une administration. Sans
+        formulaire, chaque demandeur écrit sa requête à sa manière,
+        et l'agent doit interpréter à chaque fois. Avec un
+        formulaire, la structure est imposée : nom, prénom, objet,
+        date. Le traitement devient mécanique et fiable.
+    </div>
+
+    <h3>1.2 — Un protocole, c'est un contrat</h3>
+
+    <p>
+        Un protocole applicatif définit au minimum :
+    </p>
+    <table>
+        <tr><th>Élément</th><th>Rôle</th></tr>
+        <tr>
+            <td>Les types de messages</td>
+            <td>Quels messages peuvent être envoyés (login, message,
+                fichier, ack, erreur…)</td>
+        </tr>
+        <tr>
+            <td>Le format de chaque message</td>
+            <td>Quels champs, dans quel ordre, avec quels types</td>
+        </tr>
+        <tr>
+            <td>Les transitions autorisées</td>
+            <td>Dans quel état un message est valide (login avant
+                message, etc.)</td>
+        </tr>
+        <tr>
+            <td>Les réponses attendues</td>
+            <td>Quel message déclenche quelle réponse</td>
+        </tr>
+        <tr>
+            <td>Les cas d'erreur</td>
+            <td>Que faire si un message est invalide, incomplet,
+                inattendu</td>
+        </tr>
+    </table>
+
+    <p>
+        Une fois ce contrat établi, client et serveur peuvent être
+        développés indépendamment, tant qu'ils respectent le
+        protocole. C'est ce qui permet à des équipes différentes de
+        travailler sur les deux côtés, ou à un client d'être réécrit
+        sans toucher au serveur.
+    </p>
+
+    <h3>1.3 — Le protocole qu'on va construire</h3>
+
+    <p>
+        Sur cette journée, on construit progressivement un protocole
+        de transfert de fichiers. À la fin, on aura :
+    </p>
+    <ul>
+        <li>un message <code>LOGIN</code> (pseudo) ;</li>
+        <li>un message <code>SEND_FILE</code> (nom, taille, hash) ;</li>
+        <li>des messages <code>CHUNK</code> (données binaires) ;</li>
+        <li>un message <code>END_FILE</code> (hash global) ;</li>
+        <li>un message <code>ACK</code> (confirmation) ;</li>
+        <li>un message <code>ERROR</code> (erreur protocolaire) ;</li>
+        <li>un message <code>RESUME</code> (reprise après
+            déconnexion).</li>
+    </ul>
+
+    <p>
+        Chaque séquence ajoute une couche. On ne code pas tout d'un
+        coup : on construit progressivement, en testant à chaque
+        étape.
+    </p>
+
+    <h3>1.4 — Un exemple concret de problème résolu par le protocole</h3>
+
+    <p>
+        Imaginons qu'on veuille envoyer le message
+        <code>"bonjour\n"</code> en texte brut. Puis qu'on envoie un
+        second message. Comment le serveur sait-il où s'arrête le
+        premier et où commence le second ?
+    </p>
+
+    <p>
+        Si le séparateur est le saut de ligne, le serveur lira
+        <code>"bonjour"</code> puis <code>""</code> (le
+        <code>\n</code>). Mais si le message lui-même contient un
+        saut de ligne, la lecture sera erronée. On peut interdire
+        les sauts de ligne dans le message, mais on ne peut plus
+        alors transmettre de texte multi-ligne. On peut échapper le
+        saut de ligne, mais le protocole devient complexe et fragile.
+    </p>
+
+    <p>
+        La solution robuste est de <strong>préfixer chaque message
+        par sa longueur</strong>. Le serveur lit d'abord 4 octets
+        (la longueur), puis exactement N octets (le message). Il
+        n'y a plus aucune ambiguïté, quelle que soit la donnée
+        transmise. C'est ce qu'on met en place en séquence 3.
+    </p>
+
+    <div class="exercise">
+        <span class="level easy">Micro-TP 1 — 20 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Observer les limites du protocole textuel du Jour 2, pour
+            que la suite ait un sens vécu.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Reprendre le serveur de chat du Jour 2
+                (<code>ServeurChat.java</code>).</li>
+            <li>Envoyer, depuis un client, un message contenant
+                lui-même un saut de ligne
+                (par exemple en tapant <code>ligne1</code> puis
+                Entrée, puis <code>ligne2</code>).</li>
+            <li>Observer côté serveur : combien de messages
+                distincts sont reçus ?</li>
+            <li>Essayer d'envoyer un message très long (10 000
+                caractères). Observer la réception côté serveur.</li>
+            <li>Essayer d'envoyer un caractère accentué, puis un
+                emoji. Observer ce que reçoivent les autres
+                clients.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Le saut de ligne dans un message est-il transmis
+                correctement ?</li>
+            <li>Le message long est-il reçu en un seul bloc, ou
+                tronqué ?</li>
+            <li>L'encodage est-il préservé de bout en bout ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Quel mécanisme faudrait-il ajouter au protocole pour
+            transmettre correctement un message contenant un saut
+            de ligne ? Et un message de 10 000 caractères ? Proposer
+            deux solutions possibles et discuter leurs avantages
+            respectifs.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 2 — FORMAT BINAIRE
+============================================================ -->
+<section id="seq2">
+    <span class="sequence">Séquence 2</span>
+    <h2>2. Format binaire</h2>
+
+    <h3>2.1 — Pourquoi le binaire</h3>
+
+    <p>
+        Un message peut contenir du texte (un pseudo, un nom de
+        fichier) mais aussi des données binaires (le contenu d'une
+        image, d'un PDF, d'un exécutable). Transmettre ces données
+        en texte demanderait un encodage (base64, hexadécimal) qui
+        gonflerait la taille et compliquerait le code. Le plus
+        simple est de transmettre les octets tels quels, précédés
+        d'un <strong>en-tête binaire</strong> qui indique comment
+        les interpréter.
+    </p>
+
+    <p>
+        En Java, deux classes facilitent la lecture et l'écriture de
+        types primitifs sur un flux :
+        <code>DataInputStream</code> et
+        <code>DataOutputStream</code>. Elles enveloppent un flux
+        existant (<code>InputStream</code> ou
+        <code>OutputStream</code>) et ajoutent des méthodes pour
+        lire et écrire des <code>int</code>, <code>long</code>,
+        <code>short</code>, <code>byte[]</code>, etc.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong>
+        <code>DataInputStream</code> est comme un traducteur
+        spécialisé : il lit 4 octets et les interprète comme un
+        entier, 8 octets comme un long, N octets comme un tableau.
+        Sans lui, on manipulerait des octets à la main avec des
+        décalages de bits — faisable, mais beaucoup plus long et
+        plus sujet aux erreurs.
+    </div>
+
+    <h3>2.2 — Méthodes principales</h3>
+
+    <table>
+        <tr><th>Écriture</th><th>Lecture</th><th>Taille</th></tr>
+        <tr><td><code>writeByte(int)</code></td><td><code>readByte()</code></td><td>1 octet</td></tr>
+        <tr><td><code>writeShort(int)</code></td><td><code>readShort()</code></td><td>2 octets</td></tr>
+        <tr><td><code>writeInt(int)</code></td><td><code>readInt()</code></td><td>4 octets</td></tr>
+        <tr><td><code>writeLong(long)</code></td><td><code>readLong()</code></td><td>8 octets</td></tr>
+        <tr><td><code>writeUTF(String)</code></td><td><code>readUTF()</code></td><td>2 + N octets</td></tr>
+        <tr><td><code>write(byte[])</code></td><td><code>readFully(byte[])</code></td><td>N octets</td></tr>
+    </table>
+
+    <p>
+        <code>writeUTF</code> et <code>readUTF</code> sont
+        particulièrement utiles : ils écrivent la longueur de la
+        chaîne sur 2 octets, puis la chaîne elle-même en UTF-8. Ils
+        résolvent à eux seuls le problème « combien d'octets lire
+        pour cette chaîne ? ».
+    </p>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> <code>writeUTF</code> est
+        limité à 65 535 octets par chaîne (car la longueur est
+        stockée sur un <code>short</code> non signé). Pour une
+        chaîne plus longue, il faut une autre méthode.
+    </div>
+
+    <h3>2.3 — Endianness</h3>
+
+    <p>
+        Pour les entiers de plus d'un octet, il existe deux
+        conventions d'ordre des octets :
+    </p>
+    <ul>
+        <li><strong>Big-endian</strong> : l'octet de poids fort
+            d'abord.</li>
+        <li><strong>Little-endian</strong> : l'octet de poids
+            faible d'abord.</li>
+    </ul>
+
+    <p>
+        <code>DataOutputStream</code> écrit en
+        <strong>big-endian</strong>. C'est la convention
+        historique du réseau (RFC 1700), adoptée par Java. Tant que
+        client et serveur utilisent tous deux
+        <code>DataInputStream</code> / <code>DataOutputStream</code>,
+        la convention est transparente. Mais si l'un des deux est
+        écrit dans un autre langage (Python, C++), il faut connaître
+        la convention et l'appliquer explicitement.
+    </p>
+
+    <h3>2.4 — <code>readFully()</code> versus <code>read()</code></h3>
+
+    <p>
+        La méthode <code>read(byte[])</code> héritée de
+        <code>InputStream</code> peut renvoyer <strong>moins</strong>
+        que la taille demandée, comme on l'a vu au Jour 1. La
+        méthode <code>readFully(byte[])</code> de
+        <code>DataInputStream</code>, elle, <strong>lit exactement
+        N octets ou lève une exception</strong>. C'est ce qu'il faut
+        utiliser pour un protocole binaire où chaque champ a une
+        taille fixe.
+    </p>
+
+<pre><code>DataInputStream in = new DataInputStream(socket.getInputStream());
+
+int longueur = in.readInt();                 // lit exactement 4 octets
+byte[] donnees = new byte[longueur];
+in.readFully(donnees);                        // lit exactement 'longueur' octets</code></pre>
+
+    <div class="exercise">
+        <span class="level easy">Micro-TP 2 — 20 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Manipuler <code>DataInputStream</code> et
+            <code>DataOutputStream</code> sur une socket.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Créer une classe <code>ServeurBinaire.java</code> :
+                <ul>
+                    <li>écoute sur le port 9010 ;</li>
+                    <li>accepte une connexion ;</li>
+                    <li>enveloppe le flux d'entrée dans un
+                        <code>DataInputStream</code> ;</li>
+                    <li>lit un <code>int</code>, un
+                        <code>long</code>, un <code>String</code>
+                        (via <code>readUTF</code>) et un tableau
+                        d'octets (précédé de sa longueur) ;</li>
+                    <li>affiche chaque valeur reçue.</li>
+                </ul>
+            </li>
+            <li>Créer une classe <code>ClientBinaire.java</code> :
+                <ul>
+                    <li>se connecte au serveur ;</li>
+                    <li>envoie les mêmes types dans le même ordre,
+                        avec des valeurs arbitraires.</li>
+                </ul>
+            </li>
+            <li>Tester.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Les valeurs sont-elles reçues correctement ?</li>
+            <li>Que se passe-t-il si le client envoie les types
+                dans un ordre différent ? Le serveur le
+                détecte-t-il ?</li>
+            <li>Que se passe-t-il si le client ferme la connexion
+                au milieu de l'envoi d'un champ ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi le protocole doit-il préciser <strong>l'ordre
+            exact</strong> des types, et pas seulement leur liste ?
+            Que se passe-t-il si on lit dans un ordre différent de
+            celui utilisé pour l'écriture ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 3 — EN-TÊTE
+============================================================ -->
+<section id="seq3">
+    <span class="sequence">Séquence 3</span>
+    <h2>3. En-tête de message</h2>
+
+    <h3>3.1 — Le principe</h3>
+
+    <p>
+        Un protocole applicatif typique structure chaque message en
+        deux parties :
+    </p>
+    <ul>
+        <li>un <strong>en-tête</strong> de taille fixe, qui contient
+            des métadonnées (type, longueur du corps, identifiant) ;</li>
+        <li>un <strong>corps</strong> de taille variable, qui
+            contient la charge utile (données du message).</li>
+    </ul>
+
+    <p>
+        Cette structure permet au récepteur de lire d'abord un
+        en-tête de taille connue, puis d'en déduire exactement
+        combien d'octets lire pour le corps. Aucune ambiguïté n'est
+        possible, quelle que soit la taille ou le contenu du corps.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 1 — Structure d'un message</h4>
+        <canvas id="schemaMessage" width="900" height="280"></canvas>
+        <p class="caption">
+            Un message est composé d'un en-tête de taille fixe
+            (type, longueur, identifiant) suivi d'un corps de
+            longueur variable. Le récepteur lit l'en-tête, puis
+            exactement « longueur » octets pour le corps.
+        </p>
+    </div>
+
+    <h3>3.2 — Un exemple d'en-tête</h3>
+
+    <p>
+        Voici une proposition d'en-tête simple, utilisée dans la
+        suite de la journée :
+    </p>
+
+    <table>
+        <tr><th>Champ</th><th>Type</th><th>Taille</th><th>Rôle</th></tr>
+        <tr><td><code>type</code></td><td><code>short</code></td><td>2 octets</td><td>Type du message (LOGIN, SEND_FILE…)</td></tr>
+        <tr><td><code>longueur</code></td><td><code>int</code></td><td>4 octets</td><td>Longueur du corps</td></tr>
+        <tr><td><code>id</code></td><td><code>int</code></td><td>4 octets</td><td>Identifiant du message (pour associer requête et réponse)</td></tr>
+    </table>
+
+    <p>
+        L'en-tête fait donc 10 octets. Le corps suit immédiatement.
+        Les types de messages sont des constantes :
+    </p>
+
+<pre><code>public static final short LOGIN      = 1;
+public static final short SEND_FILE  = 2;
+public static final short CHUNK      = 3;
+public static final short END_FILE   = 4;
+public static final short ACK        = 5;
+public static final short ERROR      = 6;
+public static final short RESUME     = 7;</code></pre>
+
+    <h3>3.3 — Écriture et lecture d'un message</h3>
+
+<pre><code>public static void ecrire(DataOutputStream out, short type,
+                          int id, byte[] corps) throws IOException {
+    out.writeShort(type);
+    out.writeInt(corps.length);
+    out.writeInt(id);
+    out.write(corps);
+    out.flush();
+}
+
+public static Message lire(DataInputStream in) throws IOException {
+    short type = in.readShort();
+    int longueur = in.readInt();
+    int id = in.readInt();
+
+    byte[] corps = new byte[longueur];
+    in.readFully(corps);
+
+    return new Message(type, id, corps);
+}</code></pre>
+
+    <p>
+        La classe <code>Message</code> est un simple conteneur
+        (<code>type</code>, <code>id</code>, <code>corps</code>).
+        Le protocole garantit que <code>lire()</code> correspond
+        toujours à un <code>ecrire()</code> : les deux savent
+        exactement combien d'octets lire à chaque étape.
+    </p>
+
+    <h3>3.4 — Le problème de l'identifiant</h3>
+
+    <p>
+        L'identifiant (<code>id</code>) sert à associer une réponse
+        à une requête. Par exemple, un client envoie un
+        <code>SEND_FILE</code> avec <code>id = 42</code>. Le
+        serveur répond par un <code>ACK</code> avec le même
+        <code>id = 42</code>. Le client sait alors que cet ACK
+        concerne bien sa requête, et pas une autre envoyée
+        parallèlement.
+    </p>
+
+    <p>
+        Sans identifiant, on ne pourrait pas avoir plusieurs
+        requêtes en vol simultanément. On serait obligé d'attendre
+        la réponse avant d'envoyer la suivante (mode ping-pong).
+        L'identifiant permet le <strong>pipelines</strong> :
+        plusieurs requêtes en attente, dont les réponses arrivent
+        dans un ordre quelconque.
+    </p>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> l'identifiant doit être
+        <strong>unique</strong> parmi les messages en vol. En
+        pratique, un compteur croissant côté client suffit. Le
+        serveur, lui, doit conserver un état par identifiant tant
+        que la réponse n'a pas été envoyée.
+    </div>
+
+    <div class="exercise">
+        <span class="level medium">Micro-TP 3 — 30 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Implémenter la lecture et l'écriture de messages avec
+            en-tête, et tester avec un client minimal.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Créer une classe <code>Message.java</code> (type,
+                id, corps).</li>
+            <li>Créer une classe <code>Protocole.java</code> avec :
+                <ul>
+                    <li>les constantes de type ;</li>
+                    <li>une méthode <code>ecrire</code> ;</li>
+                    <li>une méthode <code>lire</code>.</li>
+                </ul>
+            </li>
+            <li>Créer un <code>ServeurProto.java</code> qui :
+                <ul>
+                    <li>écoute sur le port 9011 ;</li>
+                    <li>accepte une connexion ;</li>
+                    <li>lit les messages en boucle et les affiche
+                        (type, id, longueur du corps) ;</li>
+                    <li>répond à chaque message par un
+                        <code>ACK</code> avec le même id et un
+                        corps vide.</li>
+                </ul>
+            </li>
+            <li>Créer un <code>ClientProto.java</code> qui :
+                <ul>
+                    <li>envoie 3 messages de types différents, avec
+                        des ids croissants ;</li>
+                    <li>lit les 3 ACK et vérifie que les ids
+                        correspondent.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Les 3 messages sont-ils reçus dans l'ordre ?</li>
+            <li>Les ACK arrivent-ils avec le bon id ?</li>
+            <li>Que se passe-t-il si on ferme le client au milieu
+                d'un message ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi l'identifiant doit-il être unique parmi les
+            messages en vol ? Que se passerait-il si deux requêtes
+            avaient le même id ? Proposer une stratégie pour
+            garantir l'unicité côté client.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 4 — MACHINE À ÉTATS
+============================================================ -->
+<section id="seq4">
+    <span class="sequence">Séquence 4</span>
+    <h2>4. Machine à états côté serveur</h2>
+
+    <h3>4.1 — Pourquoi une machine à états</h3>
+
+    <p>
+        Un serveur qui reçoit des messages doit savoir dans quel
+        <strong>contexte</strong> chaque message arrive. Par
+        exemple :
+    </p>
+    <ul>
+        <li>un <code>CHUNK</code> n'a de sens que si un
+            <code>SEND_FILE</code> a été reçu avant ;</li>
+        <li>un <code>LOGIN</code> ne doit pas arriver deux fois ;</li>
+        <li>un <code>END_FILE</code> sans <code>SEND_FILE</code>
+            préalable est une erreur protocolaire.</li>
+    </ul>
+
+    <p>
+        Le serveur ne peut donc pas se contenter de traiter chaque
+        message indépendamment. Il doit <strong>mémoriser l'état de
+        la session</strong> en cours et vérifier que chaque message
+        est valide dans cet état. C'est le rôle d'une
+        <strong>machine à états</strong>.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 2 — Machine à états d'une session</h4>
+        <canvas id="schemaMachine" width="900" height="420"></canvas>
+        <p class="caption">
+            Une session commence en CONNECTÉ, passe en AUTHENTIFIÉ
+            après un LOGIN, puis en TRANSFÉRANT après un SEND_FILE.
+            Chaque état n'autorise que certains types de messages.
+        </p>
+    </div>
+
+    <h3>4.2 — Les états du protocole</h3>
+
+    <table>
+        <tr><th>État</th><th>Signification</th><th>Messages autorisés</th></tr>
+        <tr>
+            <td><code>CONNECTE</code></td>
+            <td>Connexion établie, pas encore authentifié</td>
+            <td><code>LOGIN</code></td>
+        </tr>
+        <tr>
+            <td><code>AUTHENTIFIE</code></td>
+            <td>Client identifié, prêt à agir</td>
+            <td><code>SEND_FILE</code>, <code>RESUME</code></td>
+        </tr>
+        <tr>
+            <td><code>TRANSFÉRANT</code></td>
+            <td>Transfert de fichier en cours</td>
+            <td><code>CHUNK</code>, <code>END_FILE</code></td>
+        </tr>
+        <tr>
+            <td><code>TERMINE</code></td>
+            <td>Session close proprement</td>
+            <td>Aucun</td>
+        </tr>
+    </table>
+
+    <p>
+        Chaque message reçu est validé par rapport à l'état courant.
+        Si le message n'est pas autorisé, le serveur répond par un
+        <code>ERROR</code> et peut choisir de fermer la connexion
+        (comportement strict) ou de continuer (comportement
+        tolérant). On choisit généralement le comportement
+        <strong>strict</strong> : un client qui viole le protocole
+        est fermé, ce qui évite les sessions incohérentes.
+    </p>
+
+    <h3>4.3 — Squelette</h3>
+
+<pre><code>public class Session {
+    private Etat etat = Etat.CONNECTE;
+    private String pseudo;
+    private FileTransfer transfertEnCours;
+
+    public void traiter(Message msg) throws IOException {
+        switch (etat) {
+            case CONNECTE -> traiterConnecte(msg);
+            case AUTHENTIFIE -> traiterAuthentifie(msg);
+            case TRANSFÉRANT -> traiterTransferant(msg);
+            case TERMINE -> throw new IllegalStateException("session terminée");
+        }
+    }
+
+    private void traiterConnecte(Message msg) {
+        if (msg.type() != Protocole.LOGIN) {
+            erreur("LOGIN attendu en premier");
+            return;
+        }
+        pseudo = new String(msg.corps(), StandardCharsets.UTF_8);
+        etat = Etat.AUTHENTIFIE;
+        ack(msg.id());
+    }
+
+    private void traiterAuthentifie(Message msg) {
+        switch (msg.type()) {
+            case Protocole.SEND_FILE -> demarrerTransfert(msg);
+            case Protocole.RESUME -> reprendreTransfert(msg);
+            default -> erreur("SEND_FILE ou RESUME attendu");
+        }
+    }
+
+    private void traiterTransferant(Message msg) {
+        switch (msg.type()) {
+            case Protocole.CHUNK -> recevoirChunk(msg);
+            case Protocole.END_FILE -> terminerTransfert(msg);
+            default -> erreur("CHUNK ou END_FILE attendu");
+        }
+    }
+}</code></pre>
+
+    <h3>4.4 — Pourquoi cette structure est essentielle</h3>
+
+    <p>
+        Sans machine à états, le serveur devrait deviner le contexte
+        à partir des messages reçus. Il arriverait à des
+        incohérences : accepter un <code>CHUNK</code> alors
+        qu'aucun fichier n'est en cours, ou accepter un second
+        <code>LOGIN</code> qui écrase le pseudo précédent. Ces bugs
+        sont difficiles à diagnostiquer en production, car ils ne
+        se manifestent que dans des séquences précises.
+    </p>
+
+    <p>
+        La machine à états rend ces cas explicites : chaque état
+        n'accepte qu'un sous-ensemble de messages, et tout le reste
+        est rejeté proprement. C'est le contrat du protocole rendu
+        exécutable.
+    </p>
+
+    <div class="exercise">
+        <span class="level medium">TP 4 — 45 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Implémenter la machine à états du protocole, et vérifier
+            qu'elle rejette les messages non autorisés.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Créer une énumération <code>Etat</code> avec les
+                valeurs : <code>CONNECTE</code>,
+                <code>AUTHENTIFIE</code>, <code>TRANSFÉRANT</code>,
+                <code>TERMINE</code>.</li>
+            <li>Créer une classe <code>Session</code> qui :
+                <ul>
+                    <li>maintient l'état courant ;</li>
+                    <li>traite un <code>Message</code> selon l'état ;</li>
+                    <li>répond par <code>ACK</code> en cas de succès
+                        et par <code>ERROR</code> en cas de
+                        violation.</li>
+                </ul>
+            </li>
+            <li>Modifier <code>ServeurProto</code> pour créer une
+                <code>Session</code> par client et lui déléguer le
+                traitement des messages.</li>
+            <li>Créer un client de test qui envoie, dans l'ordre :
+                <ul>
+                    <li>un <code>SEND_FILE</code> (doit être
+                        rejeté, car on n'est pas authentifié) ;</li>
+                    <li>un <code>LOGIN</code> (doit être accepté) ;</li>
+                    <li>un second <code>LOGIN</code> (doit être
+                        rejeté) ;</li>
+                    <li>un <code>SEND_FILE</code> (doit être
+                        accepté).</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Les messages sont-ils acceptés ou rejetés selon
+                l'état ?</li>
+            <li>Que se passe-t-il si on envoie un
+                <code>CHUNK</code> avant tout
+                <code>SEND_FILE</code> ?</li>
+            <li>Le serveur peut-il continuer à servir les autres
+                clients après une violation ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi la machine à états est-elle indispensable pour
+            un protocole un tant soit peu complexe ? Que
+            gagnerait-on (et que perdrait-on) à utiliser un
+            comportement « tolérant » qui ignorerait les messages
+            inattendus au lieu de les rejeter ?
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 5 — FICHIERS
+============================================================ -->
+<section id="seq5">
+    <span class="sequence">Séquence 5</span>
+    <h2>5. Échange de fichiers</h2>
+
+    <h3>5.1 — Le problème du transfert de fichier</h3>
+
+    <p>
+        Transmettre un fichier de 100 Mo en un seul message n'est
+        pas raisonnable. Trois raisons :
+    </p>
+    <ul>
+        <li><strong>Mémoire</strong> : le serveur devrait charger
+            100 Mo en mémoire avant de pouvoir répondre.</li>
+        <li><strong>Fiabilité</strong> : si la connexion coupe au
+            milieu, tout le transfert est à refaire.</li>
+        <li><strong>Réactivité</strong> : le transfert monopolise
+            la connexion, empêchant d'autres messages de passer.</li>
+    </ul>
+
+    <p>
+        La solution est de <strong>découper le fichier en
+        chunks</strong> (morceaux) de taille fixe, généralement
+        4 Ko à 64 Ko, et de les transmettre un par un. Chaque
+        chunk est un message <code>CHUNK</code> autonome, avec son
+        propre identifiant. Le serveur reconstitue le fichier en
+        écrivant les chunks à la suite dans le fichier de
+        destination.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 3 — Découpage en chunks</h4>
+        <canvas id="schemaChunks" width="900" height="320"></canvas>
+        <p class="caption">
+            Un fichier de taille arbitraire est découpé en chunks
+            de taille fixe (sauf le dernier). Chaque chunk est
+            transmis dans un message CHUNK, puis réassemblé à
+            l'arrivée.
+        </p>
+    </div>
+
+    <h3>5.2 — Séquence du transfert</h3>
+
+    <table>
+        <tr><th>Étape</th><th>Message</th><th>Contenu</th></tr>
+        <tr>
+            <td>1</td>
+            <td><code>SEND_FILE</code></td>
+            <td>Nom du fichier, taille totale, hash global</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><code>ACK</code></td>
+            <td>Confirmation du serveur, prêt à recevoir</td>
+        </tr>
+        <tr>
+            <td>3..N</td>
+            <td><code>CHUNK</code></td>
+            <td>Numéro de chunk + données</td>
+        </tr>
+        <tr>
+            <td>N+1</td>
+            <td><code>END_FILE</code></td>
+            <td>Nombre total de chunks envoyés</td>
+        </tr>
+        <tr>
+            <td>N+2</td>
+            <td><code>ACK</code></td>
+            <td>Confirmation finale (fichier complet)</td>
+        </tr>
+    </table>
+
+    <p>
+        Cette séquence est <strong>strictement ordonnée</strong> :
+        chaque étape doit se terminer avant que la suivante ne
+        commence. C'est un mode ping-pong simple, suffisant pour un
+        premier transfert. On verra en séquence 7 comment
+        paralléliser.
+    </p>
+
+    <h3>5.3 — Format du message <code>CHUNK</code></h3>
+
+    <p>
+        Le corps du message <code>CHUNK</code> contient :
+    </p>
+    <ul>
+        <li>un <code>int</code> indiquant le numéro du chunk
+            (0, 1, 2, …) ;</li>
+        <li>les données binaires du chunk (taille variable, sauf le
+            dernier).</li>
+    </ul>
+
+    <p>
+        Le numéro du chunk permet au serveur de vérifier qu'il ne
+        manque rien et de réassembler dans le bon ordre. Si un
+        chunk est reçu deux fois, le serveur peut l'ignorer
+        (idempotence). Si un chunk manque, le serveur peut
+        demander une reprise (séquence 7).
+    </p>
+
+    <h3>5.4 — Côté serveur : réassemblage</h3>
+
+<pre><code>public void recevoirChunk(Message msg) throws IOException {
+    DataInputStream corps = new DataInputStream(
+        new ByteArrayInputStream(msg.corps()));
+
+    int numero = corps.readInt();
+
+    if (numero != prochainChunkAttendu) {
+        erreur("chunk " + numero + " reçu, attendu " + prochainChunkAttendu);
+        return;
+    }
+
+    byte[] donnees = new byte[msg.corps().length - 4];
+    corps.readFully(donnees);
+    fichierSortie.write(donnees);
+
+    prochainChunkAttendu++;
+    ack(msg.id());
+}</code></pre>
+
+    <p>
+        Le serveur vérifie que le numéro reçu est bien celui
+        attendu. Si un chunk arrive dans le désordre (ce qui ne
+        devrait pas arriver avec un protocole ping-pong, mais peut
+        arriver avec des protocoles plus permissifs), il est
+        rejeté.
+    </p>
+
+    <div class="exercise">
+        <span class="level hard">TP 5 — 60 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Implémenter un transfert de fichier complet, du
+            <code>SEND_FILE</code> à l'<code>END_FILE</code>.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Étendre <code>Session</code> pour gérer
+                <code>SEND_FILE</code>, <code>CHUNK</code>,
+                <code>END_FILE</code>.</li>
+            <li>Implémenter côté serveur :
+                <ul>
+                    <li>réception du <code>SEND_FILE</code> :
+                        ouvrir un fichier de destination ;</li>
+                    <li>réception des <code>CHUNK</code> : les
+                        écrire à la suite ;</li>
+                    <li>réception du <code>END_FILE</code> :
+                        fermer le fichier et vérifier qu'on a bien
+                        reçu le nombre attendu de chunks.</li>
+                </ul>
+            </li>
+            <li>Implémenter côté client :
+                <ul>
+                    <li>envoi du <code>SEND_FILE</code> avec nom,
+                        taille et hash (ce dernier sera
+                        implémenté en séquence 6) ;</li>
+                    <li>découpage du fichier en chunks de 16 Ko ;</li>
+                    <li>envoi successif des chunks ;</li>
+                    <li>envoi du <code>END_FILE</code>.</li>
+                </ul>
+            </li>
+            <li>Tester avec un fichier de 1 Mo.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Le fichier reçu est-il identique à l'original ?
+                (<code>diff</code> ou <code>cmp</code>)</li>
+            <li>Combien de chunks ont été échangés ?</li>
+            <li>Que se passe-t-il si on coupe le client au milieu
+                du transfert ? Le serveur crée-t-il un fichier
+                partiel ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi choisir 16 Ko comme taille de chunk plutôt
+            que 1 Ko ou 1 Mo ? Quels sont les compromis en jeu
+            (nombre de messages, taille des buffers, latence) ?
+            Proposer une heuristique pour choisir une taille
+            raisonnable.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 6 — INTÉGRITÉ
+============================================================ -->
+<section id="seq6">
+    <span class="sequence">Séquence 6</span>
+    <h2>6. Intégrité : SHA-256</h2>
+
+    <h3>6.1 — Pourquoi vérifier l'intégrité</h3>
+
+    <p>
+        TCP garantit que les octets arrivent dans l'ordre et sans
+        altération, mais <strong>uniquement sur chaque segment</strong>.
+        Si le fichier est reconstitué à partir de plusieurs chunks,
+        plusieurs erreurs peuvent se produire au niveau applicatif :
+    </p>
+    <ul>
+        <li>un chunk peut être manquant (bug du protocole, coupure) ;</li>
+        <li>un chunk peut être dupliqué ;</li>
+        <li>les chunks peuvent être assemblés dans le mauvais ordre ;</li>
+        <li>le fichier peut être tronqué en fin de transfert.</li>
+    </ul>
+
+    <p>
+        Aucune de ces erreurs n'est détectée par TCP. Pour les
+        détecter, il faut une <strong>vérification d'intégrité au
+        niveau applicatif</strong>. La méthode standard est de
+        calculer un <strong>hash cryptographique</strong> du
+        fichier (SHA-256) et de le comparer à l'arrivée.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> le hash est comme une empreinte
+        digitale du fichier. Deux fichiers différents ont des
+        empreintes différentes ; le même fichier a toujours la
+        même empreinte. Si l'empreinte à l'arrivée diffère de
+        celle au départ, c'est que le fichier a été altéré.
+    </div>
+
+    <h3>6.2 — SHA-256</h3>
+
+    <p>
+        SHA-256 (Secure Hash Algorithm, 256 bits) produit une
+        empreinte de 32 octets (256 bits) à partir de n'importe
+        quelle donnée. Ses propriétés :
+    </p>
+    <ul>
+        <li><strong>déterministe</strong> : même entrée, même
+            empreinte ;</li>
+        <li><strong>rapide</strong> : calculable en temps
+            négligeable ;</li>
+        <li><strong>non inversible</strong> : impossible de
+            retrouver l'entrée à partir de l'empreinte ;</li>
+        <li><strong>résistant aux collisions</strong> : trouver
+            deux entrées avec la même empreinte est
+            computationnellement impossible.</li>
+    </ul>
+
+    <p>
+        En Java, la classe <code>MessageDigest</code> fournit
+        SHA-256 :
+    </p>
+
+<pre><code>MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+byte[] empreinte = md.digest(fichierBytes);
+// empreinte.length == 32</code></pre>
+
+    <h3>6.3 — Vérification par chunk</h3>
+
+    <p>
+        On peut vérifier l'intégrité de deux manières :
+    </p>
+    <ul>
+        <li><strong>par chunk</strong> : chaque chunk est accompagné
+            de son propre hash ; le serveur le vérifie avant de
+            l'écrire ;</li>
+        <li><strong>globalement</strong> : un seul hash est calculé
+            sur le fichier complet, à la fin.</li>
+    </ul>
+
+    <p>
+        Les deux approches sont complémentaires. La vérification
+        par chunk permet de <strong>détecter l'erreur au plus
+        tôt</strong> et de <strong>demander la retransmission d'un
+        seul chunk</strong>. La vérification globale garantit que
+        le fichier complet est correct, même si tous les chunks
+        sont bons individuellement (par exemple si l'ordre est
+        mauvais).
+    </p>
+
+    <p>
+        Dans notre protocole, on adopte les deux :
+    </p>
+    <ul>
+        <li>chaque <code>CHUNK</code> contient, après le numéro, un
+            hash SHA-256 des données du chunk (32 octets) ;</li>
+        <li>le message <code>SEND_FILE</code> contient le hash
+            SHA-256 du fichier complet ;</li>
+        <li>le serveur vérifie le hash de chaque chunk à la
+            réception ;</li>
+        <li>à la fin, il compare le hash global.</li>
+    </ul>
+
+    <h3>6.4 — Format du message <code>CHUNK</code> enrichi</h3>
+
+    <table>
+        <tr><th>Champ</th><th>Type</th><th>Taille</th></tr>
+        <tr><td>Numéro de chunk</td><td><code>int</code></td><td>4 octets</td></tr>
+        <tr><td>Hash SHA-256 du chunk</td><td><code>byte[]</code></td><td>32 octets</td></tr>
+        <tr><td>Données du chunk</td><td><code>byte[]</code></td><td>variable</td></tr>
+    </table>
+
+    <div class="schema">
+        <h4>Schéma 4 — Vérification par chunk et globale</h4>
+        <canvas id="schemaIntegrite" width="900" height="340"></canvas>
+        <p class="caption">
+            Chaque chunk porte son propre hash SHA-256, vérifié par
+            le serveur à la réception. À la fin, le hash global du
+            fichier complet est vérifié à son tour.
+        </p>
+    </div>
+
+    <div class="exercise">
+        <span class="level hard">TP 6 — 60 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Ajouter la vérification d'intégrité SHA-256 au transfert
+            de fichier.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Modifier le protocole :
+                <ul>
+                    <li><code>SEND_FILE</code> contient désormais
+                        le hash global (32 octets) ;</li>
+                    <li><code>CHUNK</code> contient désormais le
+                        hash du chunk (32 octets) avant les
+                        données.</li>
+                </ul>
+            </li>
+            <li>Côté client :
+                <ul>
+                    <li>calculer le hash global avant l'envoi ;</li>
+                    <li>calculer le hash de chaque chunk avant
+                        l'envoi.</li>
+                </ul>
+            </li>
+            <li>Côté serveur :
+                <ul>
+                    <li>vérifier le hash de chaque chunk reçu ;</li>
+                    <li>en cas d'échec, répondre par un
+                        <code>ERROR</code> et ne pas écrire le
+                        chunk ;</li>
+                    <li>à la fin, vérifier le hash global du
+                        fichier reconstitué.</li>
+                </ul>
+            </li>
+            <li>Tester avec un fichier de 1 Mo, puis en simulant
+                une corruption (modifier un octet dans un chunk
+                côté client avant envoi).</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Le hash global est-il identique au départ et à
+                l'arrivée ?</li>
+            <li>En cas de corruption d'un chunk, le serveur le
+                détecte-t-il ?</li>
+            <li>Quel est le surcoût en taille (32 octets par chunk,
+                plus 32 pour le fichier) ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi vérifier à la fois chaque chunk et le fichier
+            global ? Que détecte la vérification par chunk que la
+            vérification globale ne détecte pas, et inversement ?
+            Discuter le compromis entre sécurité et coût.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 7 — REPRISE
+============================================================ -->
+<section id="seq7">
+    <span class="sequence">Séquence 7</span>
+    <h2>7. Reprise sur incident</h2>
+
+    <h3>7.1 — Le problème</h3>
+
+    <p>
+        Un transfert de fichier de 1 Go prend plusieurs minutes. Si
+        la connexion coupe au bout de 800 Mo, le client doit
+        normalement tout retransmettre. C'est inacceptable pour
+        l'utilisateur, et coûteux pour le réseau.
+    </p>
+
+    <p>
+        La <strong>reprise sur incident</strong> permet de
+        <strong>reprendre le transfert là où il s'est arrêté</strong>.
+        Pour cela, client et serveur doivent conserver un
+        <strong>état persistant</strong> du transfert : le nombre
+        de chunks déjà reçus, et le hash partiel du fichier reçu
+        jusqu'ici.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 5 — Reprise sur incident</h4>
+        <canvas id="schemaReprise" width="900" height="360"></canvas>
+        <p class="caption">
+            Le transfert est interrompu après le chunk N. À la
+            reconnexion, le client envoie un RESUME qui indique le
+            dernier chunk reçu par le serveur. Le transfert reprend
+            au chunk N+1.
+        </p>
+    </div>
+
+    <h3>7.2 — Le protocole de reprise</h3>
+
+    <p>
+        Le mécanisme est le suivant :
+    </p>
+    <ol>
+        <li>Le serveur sauvegarde, à chaque chunk reçu, un
+            <strong>état de transfert</strong> dans un fichier ou
+            une base : identifiant du transfert, nom du fichier,
+            nombre de chunks reçus, hash partiel.</li>
+        <li>Si la connexion coupe, le serveur conserve cet état.</li>
+        <li>Le client se reconnecte et envoie un
+            <code>RESUME</code> avec le nom du fichier.</li>
+        <li>Le serveur répond avec l'état sauvegardé : nombre de
+            chunks déjà reçus.</li>
+        <li>Le client envoie les chunks manquants à partir du bon
+            numéro.</li>
+    </ol>
+
+    <h3>7.3 — État persistant</h3>
+
+<pre><code>public class EtatTransfert {
+    private final String nomFichier;
+    private final long taille;
+    private int chunksRecus;
+    private final MessageDigest hashPartiel;
+
+    // sérialisation sur disque à chaque chunk
+    public void sauvegarder() throws IOException {
+        try (ObjectOutputStream out = new ObjectOutputStream(
+                new FileOutputStream(nomFichier + ".etat"))) {
+            out.writeInt(chunksRecus);
+            out.write(hashPartiel.digest());
+        }
+    }
+
+    public static EtatTransfert charger(String nomFichier) throws IOException {
+        // lecture de l'état depuis le fichier .etat
+        // ...
+    }
+}</code></pre>
+
+    <p>
+        L'état doit être <strong>sauvegardé de manière atomique</strong>
+        (écrire dans un fichier temporaire puis renommer), pour
+        éviter un état corrompu en cas de coupure pendant la
+        sauvegarde elle-même.
+    </p>
+
+    <h3>7.4 — Pourquoi c'est difficile</h3>
+
+    <p>
+        La reprise sur incident est <strong>conceptuellement
+        simple</strong> mais <strong>techniquement délicate</strong>
+        pour plusieurs raisons :
+    </p>
+    <ul>
+        <li><strong>atomicité</strong> : la sauvegarde de l'état
+            doit être tout ou rien ;</li>
+        <li><strong>cohérence</strong> : le fichier de destination
+            et le fichier d'état doivent être synchronisés (on ne
+            peut pas avoir un état qui dit « 50 chunks reçus » si
+            le fichier n'en contient que 49) ;</li>
+        <li><strong>sécurité</strong> : un attaquant pourrait
+            reprendre un transfert pour écrire dans un fichier
+            arbitraire ;</li>
+        <li><strong>nettoyage</strong> : les transferts abandonnés
+            doivent être supprimés au bout d'un certain temps,
+            sinon le disque se remplit.</li>
+    </ul>
+
+    <p>
+        Pour cette formation, on implémente une version simple :
+        état sauvegardé à chaque chunk, pas de nettoyage
+        automatique, pas de vérification de sécurité. L'objectif
+        est de comprendre le principe, pas de produire un système
+        industriel.
+    </p>
+
+    <div class="exercise">
+        <span class="level hard">TP 7 — 40 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Implémenter une reprise sur incident simple.
+        </p>
+
+        <h3>Consignes</h3>
+        <ol>
+            <li>Ajouter au serveur un fichier d'état
+                (<code>.etat</code>) qui sauvegarde, à chaque chunk
+                reçu, le nombre de chunks reçus et le hash partiel                du fichier.</li>
+            <li>Implémenter le message <code>RESUME</code> :
+                <ul>
+                    <li>le client envoie le nom du fichier ;</li>
+                    <li>le serveur répond avec le nombre de chunks
+                        déjà reçus.</li>
+                </ul>
+            </li>
+            <li>Modifier le client pour :
+                <ul>
+                    <li>envoyer un <code>RESUME</code> au lieu d'un
+                        <code>SEND_FILE</code> si le fichier
+                        existait déjà côté serveur ;</li>
+                    <li>reprendre l'envoi à partir du chunk
+                        indiqué.</li>
+                </ul>
+            </li>
+            <li>Tester : lancer un transfert de 5 Mo, couper le
+                client après 2 Mo, relancer le client, vérifier que
+                le transfert reprend au bon endroit et que le
+                fichier final est identique.</li>
+        </ol>
+
+        <h3>À observer</h3>
+        <ul>
+            <li>Le fichier final est-il identique à l'original ?</li>
+            <li>Combien de chunks ont été retransmis ?</li>
+            <li>Le fichier d'état est-il cohérent avec le fichier
+                de destination ?</li>
+        </ul>
+
+        <h3>Question de synthèse</h3>
+        <p>
+            Pourquoi la sauvegarde de l'état doit-elle être
+            atomique ? Que se passerait-il si le programme
+            plantait pendant la sauvegarde, laissant un fichier
+            d'état corrompu ? Proposer une stratégie pour garantir
+            l'atomicité.
+        </p>
+    </div>
+</section>
+
+<!-- ============================================================
+     PIEGES
+============================================================ -->
+<section id="pieges">
+    <h2>8. Pièges et erreurs courantes</h2>
+
+    <p>
+        Cette section recense les erreurs les plus fréquentes
+        rencontrées lors de l'écriture de protocoles binaires en
+        Java. Chaque piège est présenté sous la forme
+        <em>symptôme → cause → remède</em>.
+    </p>
+
+    <h3>8.1 — Oublier <code>flush()</code> après un message</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le message est écrit dans le
+        buffer, mais le serveur ne le reçoit jamais.
+        <p><strong>Cause —</strong> <code>DataOutputStream</code>
+        est souvent enveloppé d'un buffer qui accumule les octets.</p>
+        <p><strong>Remède —</strong> <code>out.flush()</code> après
+        chaque message complet.</p>
+    </div>
+
+    <h3>8.2 — Lire avec <code>read()</code> au lieu de <code>readFully()</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le corps d'un message est
+        tronqué, et les messages suivants sont décalés.
+        <p><strong>Cause —</strong> <code>read(byte[])</code> peut
+        renvoyer moins que la taille demandée. Le protocole se
+        désynchronise.</p>
+        <p><strong>Remède —</strong> toujours utiliser
+        <code>readFully(byte[])</code> pour un champ de taille
+        fixe.</p>
+    </div>
+
+    <h3>8.3 — Ne pas vérifier la longueur maximale</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>OutOfMemoryError</code> lors de la réception d'un
+        message corrompu.
+        <p><strong>Cause —</strong> un message mal formé peut
+        annoncer une longueur de 2 milliards d'octets, ce qui fait
+        allouer un tableau géant.</p>
+        <p><strong>Remède —</strong> vérifier que
+        <code>longueur &lt;= longueurMaxAutorisee</code> avant
+        d'allouer le tableau. Refuser les messages anormalement
+        grands.</p>
+    </div>
+
+    <h3>8.4 — Oublier l'encodage explicite</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> les caractères accentués sont
+        corrompus.
+        <p><strong>Cause —</strong> <code>new String(byte[])</code>
+        sans encodage utilise l'encodage par défaut de la
+        plateforme.</p>
+        <p><strong>Remède —</strong> toujours
+        <code>StandardCharsets.UTF_8</code>.</p>
+    </div>
+
+    <h3>8.5 — Mélanger les types dans un même flux</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> les valeurs lues n'ont rien à
+        voir avec celles envoyées.
+        <p><strong>Cause —</strong> on a écrit
+        <code>writeInt</code> puis <code>writeUTF</code>, mais on
+        lit <code>readUTF</code> puis <code>readInt</code>. Le
+        flux est un <strong>ordre strict</strong>.</p>
+        <p><strong>Remède —</strong> rédiger le protocole comme une
+        séquence précise. Faire valider cette séquence avant de
+        coder.</p>
+    </div>
+
+    <h3>8.6 — Oublier de fermer les flux</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> descripteurs de fichiers
+        épuisés (<code>Too many open files</code>).
+        <p><strong>Cause —</strong> les flux non fermés gardent
+        un descripteur ouvert côté système.</p>
+        <p><strong>Remède —</strong> utiliser
+        <code>try-with-resources</code> pour tous les flux.</p>
+    </div>
+
+    <h3>8.7 — Ignorer une exception dans une boucle de lecture</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le serveur continue à lire
+        après une erreur, mais les données sont corrompues.
+        <p><strong>Cause —</strong> une exception de lecture a été
+        attrapée puis ignorée, mais le flux est dans un état
+        incohérent.</p>
+        <p><strong>Remède —</strong> en cas d'exception sur un
+        flux, fermer la connexion et terminer la session.</p>
+    </div>
+
+    <h3>8.8 — Ne pas vérifier le type avant le corps</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le serveur lit un corps de
+        message comme s'il avait un format, alors que le type ne
+        le permet pas.
+        <p><strong>Cause —</strong> le format du corps dépend du
+        type de message. Lire un corps sans vérifier le type
+        produit des incohérences.</p>
+        <p><strong>Remède —</strong> toujours brancher sur le type
+        avant d'interpréter le corps.</p>
+    </div>
+
+    <h3>8.9 — Faire confiance au numéro de chunk envoyé</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> le fichier reconstitué est
+        dans le mauvais ordre.
+        <p><strong>Cause —</strong> le serveur écrit les chunks
+        dans l'ordre d'arrivée, sans vérifier que le numéro est
+        bien celui attendu.</p>
+        <p><strong>Remède —</strong> vérifier le numéro à chaque
+        chunk, rejeter les chunks hors séquence.</p>
+    </div>
+
+    <h3>8.10 — Ne pas sauvegarder l'état de manière atomique</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> après une coupure pendant le
+        transfert, le fichier d'état est corrompu et impossible à
+        relire.
+        <p><strong>Cause —</strong> l'écriture de l'état n'est pas
+        atomique : si le programme crashe pendant l'écriture, le
+        fichier est partiel.</p>
+        <p><strong>Remède —</strong> écrire dans un fichier
+        temporaire puis renommer (le renommage est atomique sur
+        la plupart des systèmes de fichiers).</p>
+    </div>
+</section>
+
+<!-- ============================================================
+     BILAN
+============================================================ -->
+<section id="bilan">
+    <h2>9. À retenir — Jour 3</h2>
+
+    <div class="callout success">
+        <ul>
+            <li>Un protocole applicatif définit les types de
+                messages, leur format, les transitions autorisées
+                et les réponses attendues.</li>
+            <li>Un message typique est composé d'un en-tête (type,
+                longueur, id) et d'un corps.</li>
+            <li><code>DataInputStream</code> et
+                <code>DataOutputStream</code> facilitent la
+                manipulation des types primitifs.</li>
+            <li><code>readFully()</code> lit exactement N octets, ou
+                lève une exception. C'est ce qu'il faut pour un
+                protocole binaire.</li>
+            <li><code>writeUTF()</code> et <code>readUTF()</code>
+                gèrent les chaînes avec leur longueur.</li>
+            <li>L'identifiant du message permet d'associer une
+                réponse à une requête, et de pipelines plusieurs
+                requêtes en vol.</li>
+            <li>Une machine à états côté serveur garantit que
+                chaque message est valide dans son contexte.</li>
+            <li>Un fichier est découpé en chunks pour limiter la
+                mémoire, permettre la reprise, et partager la
+                connexion avec d'autres messages.</li>
+            <li>SHA-256 permet de vérifier l'intégrité par chunk et
+                globalement. Les deux vérifications sont
+                complémentaires.</li>
+            <li>La reprise sur incident sauvegarde un état
+                persistant à chaque chunk, et permet de reprendre
+                au bon endroit après une coupure.</li>
+        </ul>
+    </div>
+
+    <h3>Travail à remettre pour le Jour 3</h3>
+
+    <p>
+        Le travail de la journée est vérifié en séance. Le travail
+        à domicile est un <strong>projet de synthèse</strong> à
+        rendre pour le Jour 4.
+    </p>
+
+<pre><code>jour3/
+│
+├── Message.java
+├── Protocole.java
+├── Session.java
+├── Etat.java
+├── ServeurProto.java
+├── ClientProto.java
+├── EtatTransfert.java
+└── README.md</code></pre>
+
+    <h3>Projet à domicile — Transfert de fichier sécurisé</h3>
+
+    <div class="exercise">
+        <span class="level hard">TP maison</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Étendre le protocole et le serveur du Jour 3 pour
+            supporter :
+        </p>
+        <ul>
+            <li>plusieurs fichiers en parallèle (plusieurs
+                transferts simultanés) ;</li>
+            <li>la reprise après déconnexion ;</li>
+            <li>une limite de taille par fichier et une limite
+                globale par client.</li>
+        </ul>
+
+        <h3>Cahier des charges</h3>
+
+        <h4>Fonctionnalités attendues</h4>
+        <ul>
+            <li>Un client peut envoyer plusieurs fichiers dans la
+                même session.</li>
+            <li>Chaque fichier a un hash global, vérifié par le
+                serveur.</li>
+            <li>Chaque chunk a un hash local, vérifié par le
+                serveur.</li>
+            <li>En cas de coupure, le client peut reprendre le
+                transfert au chunk suivant.</li>
+            <li>Un fichier déjà en cours de transfert ne peut pas
+                être redémarré (sauf commande explicite).</li>
+            <li>Les transferts abandonnés sont nettoyés au bout de
+                10 minutes.</li>
+        </ul>
+
+        <h4>Contraintes techniques</h4>
+        <ul>
+            <li>Utiliser un pool de threads côté serveur.</li>
+            <li>Sauvegarder l'état de chaque transfert dans un
+                fichier <code>.etat</code> à chaque chunk.</li>
+            <li>Sauvegarder l'état de manière atomique (fichier
+                temporaire + renommage).</li>
+            <li>Nettoyer les états obsolètes au démarrage du
+                serveur.</li>
+            <li>Limiter la taille d'un message à 1 Mo pour éviter
+                les abus.</li>
+        </ul>
+
+        <h4>Livrables</h4>
+        <ul>
+            <li>Le code source complet du serveur.</li>
+            <li>Le code source d'un client de test (menu texte).</li>
+            <li>Un court document (1–2 pages) précisant :
+                <ul>
+                    <li>le protocole complet (types, champs,
+                        transitions) ;</li>
+                    <li>la structure des états persistants ;</li>
+                    <li>les choix de synchronisation ;</li>
+                    <li>la stratégie de nettoyage.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h4>Critères d'évaluation</h4>
+        <table>
+            <tr><th>Critère</th><th>Poids</th></tr>
+            <tr><td>Fonctionnalité complète (transfert, vérification, reprise)</td><td>40 %</td></tr>
+            <tr><td>Robustesse (coupures, messages corrompus, abandons)</td><td>25 %</td></tr>
+            <tr><td>Qualité du protocole (machine à états, validation)</td><td>20 %</td></tr>
+            <tr><td>Clarté du document de conception</td><td>15 %</td></tr>
+        </table>
+
+        <h3>Pistes de conception</h3>
+        <p>
+            Le cahier des charges ne précise pas le protocole. À
+            vous de le concevoir. Quelques questions à trancher :
+        </p>
+        <ul>
+            <li>Comment identifier un fichier en cours de
+                transfert ? Par son nom, par un identifiant
+                unique, par un hash ?</li>
+            <li>Que se passe-t-il si deux clients envoient un
+                fichier du même nom en même temps ?</li>
+            <li>Comment gérer plusieurs transferts simultanés dans
+                la même session ?</li>
+            <li>Quelle est la stratégie de nettoyage la plus
+                appropriée (au démarrage, périodique, à la
+                déconnexion) ?</li>
+        </ul>
+    </div>
+</section>
+
+</main>
+
+<footer>
+    <p><strong>Programmation Réseau — Jour 3</strong></p>
+    <p>Protocoles applicatifs et échange de fichiers</p>
+    <p>Java 11+ · java.io · java.security · Wireshark</p>
+</footer>
+
+<!-- ============================================================
+     SCHÉMAS CANVAS — FOND BLANC, CONTRASTE ÉLEVÉ
+============================================================ -->
+<script>
+(function () {
+    "use strict";
+
+    const BG          = "#ffffff";
+    const TXT_MAIN    = "#1a1a1a";
+    const TXT_DIM     = "#4a5568";
+    const TXT_ACCENT  = "#8a6508";
+    const TXT_CYAN    = "#2c5282";
+    const TXT_GREEN   = "#2f6b3a";
+    const TXT_RED     = "#8b2c2c";
+    const BOX_FILL    = "#eef1f5";
+    const BOX_FILL_ACCENT = "#fdf8ee";
+    const BOX_FILL_GREEN  = "#eef6ee";
+    const BOX_FILL_RED    = "#f8eeee";
+    const BOX_FILL_BLUE   = "#eef4fa";
+    const BOX_STROKE  = "#4a5568";
+    const ARROW       = "#2c5282";
+
+    function setup(id) {
+        const c = document.getElementById(id);
+        if (!c) return null;
+        return { c, ctx: c.getContext("2d"), w: c.width, h: c.height };
+    }
+
+    function fond(ctx, w, h) {
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    function boite(ctx, x, y, bw, bh, label, fondCouleur, texteCouleur) {
+        ctx.fillStyle = fondCouleur || BOX_FILL;
+        ctx.strokeStyle = BOX_STROKE;
+        ctx.lineWidth = 2;
+        ctx.fillRect(x, y, bw, bh);
+        ctx.strokeRect(x, y, bw, bh);
+        ctx.fillStyle = texteCouleur || TXT_MAIN;
+        ctx.font = "bold 14px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        const lignes = label.split("\n");
+        const dy = (lignes.length - 1) * 8;
+        lignes.forEach((l, i) => ctx.fillText(l, x + bw / 2, y + bh / 2 + 5 + i * 16 - dy));
+        ctx.textAlign = "left";
+        return { x, y, w: bw, h: bh };
+    }
+
+    function fleche(ctx, x1, y1, x2, y2, couleur, epaisseur) {
+        ctx.strokeStyle = couleur || ARROW;
+        ctx.lineWidth = epaisseur || 2.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.fillStyle = couleur || ARROW;
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - 12 * Math.cos(angle - 0.4), y2 - 12 * Math.sin(angle - 0.4));
+        ctx.lineTo(x2 - 12 * Math.cos(angle + 0.4), y2 - 12 * Math.sin(angle + 0.4));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    /* ---------- Schéma 1 : structure d'un message ---------- */
+    const s1 = setup("schemaMessage");
+    if (s1) {
+        const { ctx, w, h } = s1;
+        fond(ctx, w, h);
+
+        const headerY = 90;
+        const headerH = 70;
+        const cellules = [
+            { x: 80,  w: 120, label: "type\n(2 octets)", fill: BOX_FILL_BLUE, txt: TXT_CYAN },
+            { x: 200, w: 180, label: "longueur\n(4 octets)", fill: BOX_FILL_BLUE, txt: TXT_CYAN },
+            { x: 380, w: 140, label: "id\n(4 octets)", fill: BOX_FILL_BLUE, txt: TXT_CYAN }
+        ];
+
+        cellules.forEach(c => {
+            boite(ctx, c.x, headerY, c.w, headerH, c.label, c.fill, c.txt);
+        });
+
+        const corps = boite(ctx, 520, headerY, 300, headerH, "corps\n(longueur octets)", BOX_FILL_GREEN, TXT_GREEN);
+
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("en-tête (10 octets, taille fixe)", 300, headerY - 15);
+        ctx.fillText("corps (taille variable)", 670, headerY - 15);
+
+        ctx.strokeStyle = TXT_DIM;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(520, headerY - 10);
+        ctx.lineTo(520, headerY + headerH + 40);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.fillText("le récepteur lit l'en-tête, puis exactement « longueur » octets", w / 2, headerY + headerH + 65);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma 2 : machine à états ---------- */
+    const s2 = setup("schemaMachine");
+    if (s2) {
+        const { ctx, w, h } = s2;
+        fond(ctx, w, h);
+
+        const connecte = boite(ctx, 60, 60, 190, 60, "CONNECTE", BOX_FILL_ACCENT, TXT_ACCENT);
+        const auth = boite(ctx, 340, 60, 200, 60, "AUTHENTIFIE", BOX_FILL_GREEN, TXT_GREEN);
+        const transfert = boite(ctx, 340, 220, 200, 60, "TRANSFÉRANT", BOX_FILL_BLUE, TXT_CYAN);
+        const termine = boite(ctx, 660, 60, 190, 60, "TERMINE", BOX_FILL_RED, TXT_RED);
+
+        fleche(ctx, connecte.x + connecte.w, connecte.y + 30, auth.x, auth.y + 30, ARROW);
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("LOGIN", 295, 50);
+
+        fleche(ctx, auth.x + auth.w / 2, auth.y + auth.h, transfert.x + transfert.w / 2, transfert.y, ARROW);
+        ctx.fillText("SEND_FILE", auth.x + auth.w / 2 + 70, 175);
+
+        fleche(ctx, transfert.x + transfert.w, transfert.y + 30, termine.x, termine.y + 30, ARROW);
+        ctx.fillText("END_FILE", 600, 210);
+
+        fleche(ctx, connecte.x + connecte.w / 2, connecte.y + connecte.h,
+               connecte.x + connecte.w / 2, connecte.y + connecte.h + 60, ARROW);
+        ctx.fillText("fermeture", connecte.x + connecte.w / 2 - 70, 165);
+        ctx.textAlign = "left";
+
+        // Messages autorisés
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.fillText("LOGIN uniquement", 60, 155);
+        ctx.fillText("SEND_FILE, RESUME", 340, 155);
+        ctx.fillText("CHUNK, END_FILE", 340, 315);
+        ctx.fillText("aucun", 660, 155);
+    }
+
+    /* ---------- Schéma 3 : chunks ---------- */
+    const s3 = setup("schemaChunks");
+    if (s3) {
+        const { ctx, w, h } = s3;
+        fond(ctx, w, h);
+
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 14px 'Consolas', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("fichier original", 60, 40);
+
+        // Fichier original
+        const fichierX = 60, fichierY = 55, fichierW = 800, fichierH = 50;
+        ctx.fillStyle = BOX_FILL_BLUE;
+        ctx.strokeStyle = BOX_STROKE;
+        ctx.lineWidth = 2;
+        ctx.fillRect(fichierX, fichierY, fichierW, fichierH);
+        ctx.strokeRect(fichierX, fichierY, fichierW, fichierH);
+        ctx.fillStyle = TXT_MAIN;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("fichier complet", fichierX + fichierW / 2, fichierY + fichierH / 2 + 5);
+
+        // Chunks
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 14px 'Consolas', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("découpé en chunks", 60, 165);
+
+        const chunks = 6;
+        const chunkW = 130;
+        const chunkH = 60;
+        const gap = 10;
+        const startX = 60;
+        const startY = 185;
+
+        for (let i = 0; i < chunks; i++) {
+            const x = startX + i * (chunkW + gap);
+            const couleur = i === chunks - 1 ? BOX_FILL_GREEN : BOX_FILL_BLUE;
+            const txt = i === chunks - 1 ? TXT_GREEN : TXT_CYAN;
+            boite(ctx, x, startY, chunkW, chunkH, "chunk " + i + "\n" + (i === chunks - 1 ? "(dernier)" : "(16 Ko)"), couleur, txt);
+        }
+
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.fillText("chaque chunk est transmis dans un message CHUNK autonome", 60, 285);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma 4 : intégrité ---------- */
+    const s4 = setup("schemaIntegrite");
+    if (s4) {
+        const { ctx, w, h } = s4;
+        fond(ctx, w, h);
+
+        // Chunk avec hash
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("message CHUNK", 60, 40);
+
+        const chunk = [
+            { x: 60,  w: 100, label: "numéro\n(4 octets)", fill: BOX_FILL_BLUE, txt: TXT_CYAN },
+            { x: 160, w: 150, label: "hash chunk\n(32 octets)", fill: BOX_FILL_ACCENT, txt: TXT_ACCENT },
+            { x: 310, w: 300, label: "données\n(variable)", fill: BOX_FILL_GREEN, txt: TXT_GREEN }
+        ];
+
+        chunk.forEach(c => {
+            boite(ctx, c.x, 55, c.w, 60, c.label, c.fill, c.txt);
+        });
+
+        // Vérification
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.fillText("vérification côté serveur", 60, 170);
+
+        const etapes = [
+            { label: "calcul du hash\nSHA-256", color: BOX_FILL_BLUE, txt: TXT_CYAN },
+            { label: "comparaison\navec le hash reçu", color: BOX_FILL_ACCENT, txt: TXT_ACCENT },
+            { label: "écriture du chunk\nsi OK", color: BOX_FILL_GREEN, txt: TXT_GREEN }
+        ];
+
+        etapes.forEach((e, i) => {
+            const x = 60 + i * 260;
+            boite(ctx, x, 190, 220, 60, e.label, e.color, e.txt);
+            if (i < etapes.length - 1) {
+                fleche(ctx, x + 220, 220, x + 240, 220, ARROW);
+            }
+        });
+
+        // Vérification globale
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.fillText("vérification finale du fichier complet", 60, 290);
+
+        const finalY = 305;
+        boite(ctx, 60, finalY, 700, 25, "hash global comparé au hash envoyé dans SEND_FILE", BOX_FILL_ACCENT, TXT_ACCENT);
+    }
+
+    /* ---------- Schéma 5 : reprise ---------- */
+    const s5 = setup("schemaReprise");
+    if (s5) {
+        const { ctx, w, h } = s5;
+        fond(ctx, w, h);
+
+        const clientX = 200;
+        const serveurX = w - 200;
+
+        ctx.strokeStyle = TXT_DIM;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(clientX, 30);  ctx.lineTo(clientX, h - 20);
+        ctx.moveTo(serveurX, 30); ctx.lineTo(serveurX, h - 20);
+        ctx.stroke();
+
+        ctx.fillStyle = TXT_MAIN;
+        ctx.font = "bold 14px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("CLIENT", clientX, 20);
+        ctx.fillText("SERVEUR", serveurX, 20);
+        ctx.textAlign = "left";
+
+        const messages = [
+            { y: 60,  label: "SEND_FILE", from: "C", to: "S" },
+            { y: 100, label: "ACK",       from: "S", to: "C" },
+            { y: 140, label: "CHUNK 0..N", from: "C", to: "S" },
+            { y: 180, label: "ACK",        from: "S", to: "C" },
+            { y: 230, label: "✗ coupure",  from: "C", to: "S", dashed: true, color: TXT_RED },
+            { y: 280, label: "RESUME",     from: "C", to: "S" },
+            { y: 320, label: "ACK (N+1)",  from: "S", to: "C" },
+            { y: 360, label: "CHUNK N+1..", from: "C", to: "S" }
+        ];
+
+        messages.forEach(m => {
+            const x1 = m.from === "C" ? clientX : serveurX;
+            const x2 = m.to === "C" ? clientX : serveurX;
+
+            ctx.strokeStyle = m.color || ARROW;
+            ctx.lineWidth = 2.5;
+            if (m.dashed) ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(x1, m.y);
+            ctx.lineTo(x2, m.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const dir = x2 > x1 ? 1 : -1;
+            ctx.fillStyle = m.color || ARROW;
+            ctx.beginPath();
+            ctx.moveTo(x2, m.y);
+            ctx.lineTo(x2 - dir * 12, m.y - 6);
+            ctx.lineTo(x2 - dir * 12, m.y + 6);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = m.color || TXT_MAIN;
+            ctx.font = "bold 12px 'Consolas', monospace";
+            ctx.textAlign = "center";
+            ctx.fillText(m.label, (x1 + x2) / 2, m.y - 8);
+            ctx.textAlign = "left";
+        });
+    }
+})();
+</script>
+
+</body>
+</html>
