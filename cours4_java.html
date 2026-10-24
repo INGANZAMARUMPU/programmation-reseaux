@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmation Réseau — Jour 4 : Cryptographie appliquée au chiffrement de textes</title>
+<style>
+:root {
+    --primary: #1a2b4a;
+    --accent: #2c5282;
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --border: #c8c8c8;
+    --code-bg: #f4f4f0;
+    --code-border: #d0d0c8;
+    --callout-bg: #fdfaf2;
+    --callout-border: #b8860b;
+    --info-bg: #f2f6fa;
+    --info-border: #2c5282;
+    --success-bg: #f2f8f3;
+    --success-border: #2f6b3a;
+    --danger-bg: #faf3f3;
+    --danger-border: #8b2c2c;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    font-family: "Times New Roman", "Liberation Serif", Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 12pt;
+    line-height: 1.65;
+}
+header {
+    background: var(--primary);
+    color: #ffffff;
+    padding: 45px 25px 35px;
+    border-bottom: 3px solid #0f1a30;
+}
+.header-content { max-width: 1050px; margin: auto; }
+header h1 { font-size: 1.9rem; margin: 0 0 6px; font-weight: 700; }
+header h2 {
+    color: #d8e0ec; border: none; margin: 0 0 16px;
+    font-weight: 400; font-size: 1.15rem; font-style: italic;
+}
+header p { font-size: 1rem; max-width: 760px; color: #e8edf4; }
+.badge {
+    display: inline-block; background: transparent;
+    border: 1px solid #8fa3c0; padding: 3px 10px; border-radius: 2px;
+    margin: 3px 6px 3px 0; font-size: 0.75rem;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.6px; text-transform: uppercase; color: #d8e0ec;
+}
+nav {
+    position: sticky; top: 0; z-index: 100;
+    background: #0f1a30; border-bottom: 1px solid #2a3a55;
+}
+.nav-content {
+    max-width: 1050px; margin: auto;
+    display: flex; overflow-x: auto; gap: 0; padding: 4px 10px;
+}
+nav a {
+    color: #c8d4e4; text-decoration: none; padding: 9px 13px;
+    white-space: nowrap; font-size: 0.82rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.15s, color 0.15s;
+}
+nav a:hover { color: #ffffff; border-bottom-color: #8fa3c0; }
+main { max-width: 1050px; margin: auto; padding: 35px 20px; }
+section {
+    background: var(--card); border: 1px solid var(--border);
+    padding: 28px 32px; margin-bottom: 24px;
+}
+h2 {
+    color: var(--primary); font-size: 1.35rem; font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px; margin-top: 0; margin-bottom: 18px;
+}
+h3 {
+    color: #2a3a55; margin-top: 26px; margin-bottom: 10px;
+    font-weight: 700; font-size: 1.05rem;
+}
+h4 {
+    color: var(--accent); font-weight: 700;
+    margin-bottom: 6px; margin-top: 18px; font-size: 1rem;
+}
+p { margin: 12px 0; }
+ul, ol { padding-left: 28px; }
+li { margin: 6px 0; }
+.callout {
+    padding: 16px 22px; margin: 18px 0; border-left: 3px solid;
+}
+.callout.objectifs { background: var(--info-bg); border-color: var(--info-border); }
+.callout.important { background: var(--callout-bg); border-color: var(--callout-border); }
+.callout.info { background: var(--info-bg); border-color: var(--info-border); }
+.callout.success { background: var(--success-bg); border-color: var(--success-border); }
+.callout.danger { background: var(--danger-bg); border-color: var(--danger-border); }
+pre {
+    background: var(--code-bg); color: #1a1a1a;
+    padding: 16px 20px; border: 1px solid var(--code-border);
+    overflow-x: auto;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 0.85rem; line-height: 1.55; margin: 14px 0;
+}
+code {
+    font-family: "Consolas", "Courier New", monospace;
+    background: #eeeeea; color: #1a1a1a;
+    padding: 1px 5px; font-size: 0.88em; border: 1px solid #dcdcd6;
+}
+pre code { background: transparent; border: none; padding: 0; font-size: 0.85rem; }
+table {
+    width: 100%; border-collapse: collapse;
+    margin: 18px 0; font-size: 0.95rem;
+}
+th, td {
+    border: 1px solid var(--border); padding: 9px 12px;
+    text-align: left; vertical-align: top;
+}
+th { background: #eef1f5; color: #1a2b4a; font-weight: 700; }
+tr:nth-child(even) { background: #fafaf8; }
+.exercise {
+    border: 1px solid #a0a0a0; border-left: 3px solid var(--primary);
+    background: #fcfcfa; padding: 18px 22px; margin: 20px 0;
+}
+.level {
+    display: inline-block; padding: 2px 10px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; font-family: Arial, Helvetica, sans-serif;
+    border: 1px solid; margin-bottom: 8px;
+}
+.easy { background: #eef6ee; color: #2f6b3a; border-color: #2f6b3a; }
+.medium { background: #fdf8ee; color: #8a6508; border-color: #8a6508; }
+.hard { background: #f8eeee; color: #8b2c2c; border-color: #8b2c2c; }
+.schema {
+    margin: 22px 0 26px; border: 1px solid #b9c2cf;
+    background: #fbfcfd; padding: 16px;
+}
+.schema h4 { margin-top: 0; }
+.schema canvas {
+    display: block; width: 100%; height: auto;
+    background: #ffffff; border: 1px solid #dbe1e8; margin: 8px 0;
+}
+.schema .caption {
+    margin: 10px 0 0; color: #4a5568;
+    font-size: .92rem; text-align: center;
+}
+.sequence {
+    display: inline-block; padding: 3px 10px;
+    background: var(--primary); color: #ffffff;
+    font-size: 0.75rem; font-weight: 700;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: 6px; border-radius: 2px;
+}
+.qcm {
+    border: 1px solid #c8c8c8; background: #fbfbfb;
+    padding: 16px 22px; margin: 20px 0;
+}
+.qcm h4 { margin-top: 0; }
+.qcm ol { counter-reset: qcm; list-style: none; padding-left: 0; }
+.qcm ol > li {
+    counter-increment: qcm; margin: 14px 0; padding-left: 34px;
+    position: relative;
+}
+.qcm ol > li::before {
+    content: counter(qcm) ".";
+    position: absolute; left: 0; top: 0;
+    font-weight: 700; color: var(--primary);
+}
+.qcm .choix { margin-top: 6px; }
+.qcm .choix label {
+    display: block; padding: 3px 0; font-size: 0.95rem;
+}
+.fiche {
+    border: 2px solid var(--primary); background: #fcfcf8;
+    padding: 22px 28px; margin: 24px 0;
+}
+.fiche h3 {
+    margin-top: 0; color: var(--primary);
+    font-size: 1.1rem; border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+}
+.fiche .grille {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-top: 14px;
+}
+@media (max-width: 700px) { .fiche .grille { grid-template-columns: 1fr; } }
+.fiche .carte {
+    border: 1px solid var(--border); padding: 12px 16px;
+    background: #ffffff;
+}
+.fiche .carte strong { color: var(--accent); }
+footer {
+    background: #1a2b4a; color: #c8d4e4;
+    text-align: center; padding: 28px 20px; margin-top: 30px;
+    font-size: 0.85rem;
+    font-family: Arial, Helvetica, sans-serif;
+    border-top: 3px solid #0f1a30;
+}
+footer p { margin: 4px 0; }
+@media (max-width: 700px) {
+    header h1 { font-size: 1.4rem; }
+    header h2 { font-size: 1rem; }
+    section { padding: 20px 18px; }
+    pre { font-size: 0.78rem; }
+    h2 { font-size: 1.15rem; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-content">
+        <span class="badge">Programmation Réseau</span>
+        <span class="badge">Jour 4 / 4</span>
+        <span class="badge">Java</span>
+        <span class="badge">Cryptographie</span>
+
+        <h1>Jour 4 — Cryptographie appliquée au chiffrement de textes</h1>
+        <h2>Hash, HMAC, AES, RSA, encodage</h2>
+
+        <p>
+            Cette quatrième et dernière journée se concentre sur une
+            compétence concrète : chiffrer un message texte, vérifier
+            qu'il n'a pas été modifié, s'assurer qu'il vient bien de
+            la bonne personne, et le transporter dans un autre
+            programme. Chaque notion est d'abord expliquée par une
+            analogie du quotidien, puis mise en œuvre en Java.
+        </p>
+
+        <p>
+            <strong>Durée :</strong> 9 heures &nbsp;|&nbsp;
+            <strong>Prérequis :</strong> Jours 1 à 3 (sockets, threads,
+            protocoles)
+        </p>
+    </div>
+</header>
+
+<nav>
+    <div class="nav-content">
+        <a href="#objectifs">Objectifs</a>
+        <a href="#seq1">Séq. 1 — Hash</a>
+        <a href="#seq2">Séq. 2 — HMAC</a>
+        <a href="#seq3">Séq. 3 — AES</a>
+        <a href="#seq4">Séq. 4 — RSA</a>
+        <a href="#seq5">Séq. 5 — Encodage</a>
+        <a href="#fiche">Fiche</a>
+        <a href="#bilan">Bilan</a>
+    </div>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     1. OBJECTIFS
+============================================================ -->
+<section id="objectifs">
+    <h2>1. Objectifs pédagogiques</h2>
+
+    <div class="callout objectifs">
+        <p>À l'issue de cette journée, l'étudiant doit être capable de :</p>
+        <ul>
+            <li>calculer le hash SHA-256 d'un texte et vérifier son
+                intégrité ;</li>
+            <li>signer un texte avec HMAC et vérifier qu'il vient
+                bien de la bonne personne ;</li>
+            <li>chiffrer et déchiffrer un texte avec AES-GCM ;</li>
+            <li>chiffrer un texte court avec RSA et comprendre
+                pourquoi on ne l'utilise pas pour du texte long ;</li>
+            <li>encoder du binaire en base64 pour le transporter dans
+                du texte (JSON, URL, email) ;</li>
+            <li>reconnaître, dans un programme ou un fichier de
+                configuration, les usages de ces quatre briques.</li>
+        </ul>
+    </div>
+
+    <h3>Organisation de la journée</h3>
+    <table>
+        <tr><th>Séquence</th><th>Type</th><th>Durée</th></tr>
+        <tr><td>1 — Hash SHA-256</td><td>Théorie + TP guidé</td><td>1 h 15</td></tr>
+        <tr><td>2 — HMAC</td><td>Théorie + TP guidé</td><td>1 h 00</td></tr>
+        <tr><td>3 — AES-GCM</td><td>Théorie + TP guidé</td><td>1 h 45</td></tr>
+        <tr><td>4 — RSA</td><td>Théorie + TP guidé</td><td>1 h 30</td></tr>
+        <tr><td>5 — Encodage et transport</td><td>Théorie + TP guidé</td><td>1 h 30</td></tr>
+        <tr><td>Bilan, fiche, pièges</td><td>Synthèse</td><td>0 h 30</td></tr>
+        <tr><td>Battement, debug, questions</td><td></td><td>1 h 30</td></tr>
+    </table>
+
+    <div class="callout info">
+        <strong>Comment aborder cette journée —</strong> la
+        cryptographie impressionne, mais les quatre briques qu'on
+        voit aujourd'hui sont simples à utiliser. On n'implémente
+        aucun algorithme : on utilise les classes Java fournies par
+        la bibliothèque standard. Le travail consiste à comprendre
+        <em>à quoi sert chaque brique</em> et <em>comment on
+        l'appelle</em>, pas à refaire les mathématiques.
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 1 — HASH SHA-256
+============================================================ -->
+<section id="seq1">
+    <span class="sequence">Séquence 1 — 1 h 15</span>
+    <h2>2. Hash SHA-256</h2>
+
+    <h3>2.1 — L'analogie : l'empreinte digitale d'un texte</h3>
+
+    <p>
+        Imaginez que vous deviez vérifier qu'un document n'a pas été
+        modifié, sans comparer le document entier. Vous pourriez
+        comparer une <strong>empreinte</strong> du document : un
+        petit résumé qui dépend de tout le contenu. Si une seule
+        lettre change, l'empreinte change. Si le document est
+        identique, l'empreinte est identique.
+    </p>
+
+    <p>
+        C'est exactement ce que fait un <strong>hash
+        cryptographique</strong>. Il prend en entrée un texte de
+        n'importe quelle longueur et produit une empreinte de
+        taille fixe. Pour SHA-256, cette empreinte fait
+        <strong>32 octets</strong> (256 bits), soit 64 caractères
+        en hexadécimal.
+    </p>
+
+    <p>
+        Deux propriétés essentielles :
+    </p>
+    <ul>
+        <li><strong>déterministe</strong> : le même texte donne
+            toujours la même empreinte ;</li>
+        <li><strong>non inversible</strong> : à partir de
+            l'empreinte, on ne peut pas retrouver le texte
+            d'origine.</li>
+    </ul>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> le hash d'un texte est comme
+        l'empreinte digitale d'une personne. Elle est unique,
+        stable, et on ne peut pas reconstruire la personne à
+        partir de son empreinte.
+    </div>
+
+    <h3>2.2 — À quoi ça sert</h3>
+
+    <table>
+        <tr><th>Usage</th><th>Explication</th></tr>
+        <tr>
+            <td>Vérifier l'intégrité d'un fichier téléchargé</td>
+            <td>On compare le hash du fichier reçu avec le hash
+                publié par l'éditeur.</td>
+        </tr>
+        <tr>
+            <td>Stocker un mot de passe</td>
+            <td>On stocke le hash du mot de passe, jamais le mot de
+                passe lui-même. À la connexion, on hache ce que
+                l'utilisateur tape et on compare.</td>
+        </tr>
+        <tr>
+            <td>Identifier un contenu</td>
+            <td>Git utilise SHA-1 pour identifier chaque commit et
+                chaque fichier.</td>
+        </tr>
+        <tr>
+            <td>Détecter une altération</td>
+            <td>Si le hash d'un message reçu diffère de celui
+                attendu, le message a été modifié en route.</td>
+        </tr>
+    </table>
+
+    <h3>2.3 — Ce qu'un hash ne fait PAS</h3>
+
+    <p>
+        Un hash seul ne protège pas la confidentialité. Si vous
+        publiez le hash d'un message, le message reste lisible par
+        quiconque l'intercepte. Le hash ne fait que permettre de
+        <em>vérifier</em> que le message n'a pas été altéré.
+    </p>
+
+    <p>
+        Un hash seul ne prouve pas non plus l'identité de
+        l'expéditeur. N'importe qui peut calculer le hash d'un
+        message. Pour prouver l'identité, il faut une clé secrète
+        — c'est le rôle du HMAC (séquence 2).
+    </p>
+
+    <h3>2.4 — Le code Java</h3>
+
+    <p>
+        La classe <code>MessageDigest</code> calcule un hash. On la
+        demande par son nom (<code>"SHA-256"</code>), on lui donne
+        les octets du texte, et elle renvoie les 32 octets de
+        l'empreinte.
+    </p>
+
+<pre><code>import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+
+public class HashExample {
+    public static void main(String[] args) throws NoSuchAlgorithmException {
+        String texte = "Bonjour le monde";
+
+        // 1. Obtenir l'algorithme
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+        // 2. Fournir les octets du texte
+        byte[] octets = texte.getBytes(StandardCharsets.UTF_8);
+
+        // 3. Calculer l'empreinte
+        byte[] empreinte = md.digest(octets);
+
+        // 4. Afficher en hexadécimal (64 caractères)
+        String hex = HexFormat.of().formatHex(empreinte);
+        System.out.println(hex);
+    }
+}</code></pre>
+
+    <p>
+        <strong>Lecture du code, ligne par ligne :</strong>
+    </p>
+    <ul>
+        <li><code>MessageDigest.getInstance("SHA-256")</code> : on
+            demande une instance de l'algorithme. Le nom est
+            standard, il ne change pas.</li>
+        <li><code>texte.getBytes(UTF_8)</code> : on convertit le
+            texte en octets. <strong>L'encodage est
+            important</strong> : le même texte encodé en UTF-8 ou
+            en ISO-8859-1 donne des octets différents, donc un hash
+            différent.</li>
+        <li><code>md.digest(octets)</code> : calcule l'empreinte.
+            La méthode consomme l'instance ; pour hacher un autre
+            texte, il faut rappeler <code>getInstance</code>.</li>
+        <li><code>HexFormat.of().formatHex()</code> : convertit les
+            32 octets en 64 caractères hexadécimaux.</li>
+    </ul>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> le hash dépend de l'encodage
+        du texte. <code>"café"</code> en UTF-8 n'a pas le même hash
+        que <code>"café"</code> en ISO-8859-1. Toujours préciser
+        <code>StandardCharsets.UTF_8</code>.
+    </div>
+
+    <div class="schema">
+        <h4>Schéma 1 — Hash d'un texte</h4>
+        <canvas id="schemaHash" width="900" height="260"></canvas>
+        <p class="caption">
+            Le texte d'entrée, de longueur quelconque, est transformé
+            par SHA-256 en une empreinte de 32 octets (64 caractères
+            hexadécimaux). La moindre modification du texte change
+            complètement l'empreinte.
+        </p>
+    </div>
+
+    <h3>2.5 — Piège : comparer des hash avec <code>==</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> deux hash identiques ne sont pas
+        reconnus comme égaux.
+        <p><strong>Cause —</strong> comparer deux
+        <code>byte[]</code> avec <code>==</code> compare les
+        références, pas les contenus.</p>
+        <p><strong>Remède —</strong> utiliser
+        <code>MessageDigest.isEqual(a, b)</code>, qui compare les
+        contenus octet par octet et qui est résistant aux attaques
+        par timing.</p>
+    </div>
+
+    <h3>2.6 — Piège : utiliser MD5 ou SHA-1</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un audit de sécurité signale
+        l'usage de MD5 ou SHA-1.
+        <p><strong>Cause —</strong> ces algorithmes sont cassés :
+            on peut produire deux textes différents avec le même
+            hash (collision).</p>
+        <p><strong>Remède —</strong> utiliser SHA-256 ou SHA-3.
+            Vérifier dans le code avec <code>grep "MD5\|SHA-1"</code>.</p>
+    </div>
+
+    <div class="exercise">
+        <span class="level easy">TP guidé 1 — 30 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Écrire un programme qui calcule le hash SHA-256 d'un
+            texte saisi au clavier et le compare au résultat de la
+            commande <code>sha256sum</code>.
+        </p>
+
+        <h3>Étapes</h3>
+        <ol>
+            <li><strong>Étape 1 — Squelette</strong> : créer
+                <code>HashText.java</code> avec une méthode
+                <code>main</code> qui lit une ligne au clavier.</li>
+            <li><strong>Étape 2 — Calcul</strong> : ajouter le calcul
+                du hash avec <code>MessageDigest</code> et
+                l'affichage en hexadécimal.</li>
+            <li><strong>Étape 3 — Vérification</strong> : lancer en
+                parallèle
+                <code>echo -n "votre texte" | sha256sum</code> et
+                comparer.</li>
+            <li><strong>Étape 4 — Test d'altération</strong> :
+                modifier un caractère du texte et vérifier que le
+                hash change complètement.</li>
+        </ol>
+
+        <h3>Résultat attendu</h3>
+<pre><code>$ java HashText
+Texte > Bonjour le monde
+Hash  : 58e6c1a1b8c1a7d0c4b2e1a1c6e9d4b1...
+sha256sum : 58e6c1a1b8c1a7d0c4b2e1a1c6e9d4b1...
+Identiques ? true
+
+$ java HashText
+Texte > Bonjour le monde!
+Hash  : 7a3c8b1e9f2d4a6c8e0f2b4d6c8a0e2f...
+(complètement différent)</code></pre>
+
+        <h3>QCM de vérification</h3>
+        <div class="qcm">
+            <ol>
+                <li>Le hash d'un texte de 10 caractères fait :
+                    <div class="choix">
+                        <label><input type="radio" name="q1a"> 10 octets</label>
+                        <label><input type="radio" name="q1b"> 32 octets, quelle que soit la longueur du texte</label>
+                        <label><input type="radio" name="q1c"> 32 octets pour les textes courts, plus pour les textes longs</label>
+                    </div>
+                </li>
+                <li>Si deux textes différents donnent le même hash SHA-256, on dit qu'il y a :
+                    <div class="choix">
+                        <label><input type="radio" name="q2a"> une collision</label>
+                        <label><input type="radio" name="q2b"> une erreur d'encodage</label>
+                        <label><input type="radio" name="q2c"> une signature</label>
+                    </div>
+                </li>
+                <li>Un hash permet de :
+                    <div class="choix">
+                        <label><input type="radio" name="q3a"> cacher le contenu du texte</label>
+                        <label><input type="radio" name="q3b"> vérifier que le texte n'a pas été modifié</label>
+                        <label><input type="radio" name="q3c"> prouver l'identité de l'expéditeur</label>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 2 — HMAC
+============================================================ -->
+<section id="seq2">
+    <span class="sequence">Séquence 2 — 1 h 00</span>
+    <h2>3. HMAC</h2>
+
+    <h3>3.1 — L'analogie : le sceau de cire</h3>
+
+    <p>
+        Un hash seul ne prouve pas qui a écrit le message. Si
+        quelqu'un intercepte votre message et le hash, il peut
+        modifier le message et recalculer un nouveau hash — vous
+        n'y verrez que du feu.
+    </p>
+
+    <p>
+        Pour prouver l'identité de l'expéditeur, il faut une
+        <strong>clé secrète</strong> partagée entre l'expéditeur et
+        le destinataire. Le hash combiné à la clé s'appelle un
+        <strong>HMAC</strong> (Hash-based Message Authentication
+        Code). C'est comme un sceau de cire : le message peut être
+        lu par tout le monde, mais seul celui qui possède le sceau
+        peut l'apposer.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> le HMAC est au hash ce que le
+        sceau de cire est à l'enveloppe. L'enveloppe peut être lue,
+        mais seul le porteur du sceau peut garantir qu'elle vient
+        bien de lui.
+    </div>
+
+    <h3>3.2 — Différence entre hash et HMAC</h3>
+
+    <table>
+        <tr><th>Critère</th><th>Hash</th><th>HMAC</th></tr>
+        <tr>
+            <td>Clé secrète</td>
+            <td>Non</td>
+            <td>Oui</td>
+        </tr>
+        <tr>
+            <td>Vérifie l'intégrité</td>
+            <td>Oui</td>
+            <td>Oui</td>
+        </tr>
+        <tr>
+            <td>Prouve l'identité</td>
+            <td>Non</td>
+            <td>Oui (celui qui possède la clé)</td>
+        </tr>
+        <tr>
+            <td>Peut être recalculé par un attaquant</td>
+            <td>Oui</td>
+            <td>Non (sans la clé)</td>
+        </tr>
+    </table>
+
+    <h3>3.3 — Le code Java</h3>
+
+    <p>
+        La classe <code>Mac</code> calcule un HMAC. On lui donne
+        l'algorithme (<code>"HmacSHA256"</code>) et la clé secrète,
+        puis on lui fournit les octets du texte.
+    </p>
+
+<pre><code>import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+
+public class HmacExample {
+    public static void main(String[] args)
+            throws NoSuchAlgorithmException, InvalidKeyException {
+        String texte = "Bonjour le monde";
+        byte[] cle = "cle-secrete-partagee".getBytes(StandardCharsets.UTF_8);
+
+        // 1. Obtenir l'algorithme
+        Mac mac = Mac.getInstance("HmacSHA256");
+
+        // 2. Fournir la clé
+        mac.init(new SecretKeySpec(cle, "HmacSHA256"));
+
+        // 3. Calculer le HMAC
+        byte[] hmac = mac.doFinal(texte.getBytes(StandardCharsets.UTF_8));
+
+        // 4. Afficher en hexadécimal
+        System.out.println(HexFormat.of().formatHex(hmac));
+    }
+}</code></pre>
+
+    <p>
+        <strong>Lecture du code :</strong>
+    </p>
+    <ul>
+        <li><code>Mac.getInstance("HmacSHA256")</code> : HMAC
+            utilisant SHA-256 comme fonction de hash interne.</li>
+        <li><code>mac.init(new SecretKeySpec(cle, ...))</code> :
+            fournit la clé secrète. Les deux côtés doivent avoir
+            <strong>exactement la même clé</strong>.</li>
+        <li><code>mac.doFinal(octets)</code> : calcule le HMAC.
+            Comme <code>digest()</code>, cette méthode consomme
+            l'instance ; il faut rappeler <code>init</code> pour
+            un nouveau calcul.</li>
+    </ul>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> la clé HMAC doit être
+        <strong>longue et aléatoire</strong> (au moins 32 octets
+        pour HmacSHA256). Une clé courte ou devinable annule la
+        sécurité. Ne jamais coder la clé en dur dans le code
+        source : la stocker dans une variable d'environnement ou
+        un coffre-fort de secrets.
+    </div>
+
+    <div class="schema">
+        <h4>Schéma 2 — Hash versus HMAC</h4>
+        <canvas id="schemaHmac" width="900" height="320"></canvas>
+        <p class="caption">
+            En haut, un hash simple : n'importe qui peut le
+            recalculer. En bas, un HMAC : il faut la clé secrète
+            partagée entre expéditeur et destinataire, donc un
+            attaquant ne peut pas le recalculer.
+        </p>
+    </div>
+
+    <h3>3.4 — Piège : oublier de vérifier le HMAC</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un message altéré est accepté.
+        <p><strong>Cause —</strong> le programme calcule le HMAC
+        mais ne le compare pas à celui reçu.</p>
+        <p><strong>Remède —</strong> toujours faire la comparaison
+        avec <code>MessageDigest.isEqual</code>, et refuser le
+        message si les HMAC diffèrent.</p>
+    </div>
+
+    <h3>3.5 — Piège : réutiliser la même clé pour tout</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> une clé qui fuite compromet
+        tout le système.
+        <p><strong>Cause —</strong> une seule clé HMAC pour tous
+        les usages (authentification, signature de cookies, API).</p>
+        <p><strong>Remède —</strong> une clé par usage. Une clé
+        HMAC dédiée à chaque service. Rotation régulière.</p>
+    </div>
+
+    <div class="exercise">
+        <span class="level easy">TP guidé 2 — 30 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Écrire deux programmes : un qui signe un texte, un qui
+            vérifie la signature. Observer ce qui se passe si le
+            texte ou la clé change.
+        </p>
+
+        <h3>Étapes</h3>
+        <ol>
+            <li><strong>Étape 1 — Signer</strong> : créer
+                <code>HmacSigner.java</code> qui prend un texte et
+                une clé, et affiche le HMAC en hexadécimal.</li>
+            <li><strong>Étape 2 — Vérifier</strong> : créer
+                <code>HmacVerifier.java</code> qui prend un texte,
+                une clé et un HMAC, et dit si le HMAC est correct.</li>
+            <li><strong>Étape 3 — Test normal</strong> : signer
+                <code>"virement 100 EUR"</code>, vérifier →
+                correct.</li>
+            <li><strong>Étape 4 — Altération du texte</strong> :
+                vérifier <code>"virement 900 EUR"</code> avec le
+                même HMAC → refusé.</li>
+            <li><strong>Étape 5 — Mauvaise clé</strong> : signer
+                avec une clé, vérifier avec une autre → refusé.</li>
+        </ol>
+
+        <h3>Résultat attendu</h3>
+<pre><code>$ java HmacSigner "virement 100 EUR" cle-secrete
+HMAC : 3a5c8e1b7d9f2a4c6e8b0d2f4a6c8e0b...
+
+$ java HmacVerifier "virement 100 EUR" cle-secrete 3a5c8e1b...
+Correct : true
+
+$ java HmacVerifier "virement 900 EUR" cle-secrete 3a5c8e1b...
+Correct : false
+
+$ java HmacVerifier "virement 100 EUR" autre-cle 3a5c8e1b...
+Correct : false</code></pre>
+
+        <h3>QCM de vérification</h3>
+        <div class="qcm">
+            <ol>
+                <li>Un HMAC permet de :
+                    <div class="choix">
+                        <label><input type="radio" name="q4a"> cacher le contenu du message</label>
+                        <label><input type="radio" name="q4b"> vérifier l'intégrité et l'origine du message</label>
+                        <label><input type="radio" name="q4c"> compresser le message</label>
+                    </div>
+                </li>
+                <li>Pour vérifier un HMAC, il faut :
+                    <div class="choix">
+                        <label><input type="radio" name="q5a"> la clé publique de l'expéditeur</label>
+                        <label><input type="radio" name="q5b"> la même clé secrète que l'expéditeur</label>
+                        <label><input type="radio" name="q5c"> la clé privée de l'expéditeur</label>
+                    </div>
+                </li>
+                <li>Si un attaquant modifie le message en transit, il peut :
+                    <div class="choix">
+                        <label><input type="radio" name="q6a"> recalculer le HMAC</label>
+                        <label><input type="radio" name="q6b"> recalculer le HMAC seulement s'il a la clé</label>
+                        <label><input type="radio" name="q6c"> recalculer le HMAC avec un hash</label>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 3 — AES
+============================================================ -->
+<section id="seq3">
+    <span class="sequence">Séquence 3 — 1 h 45</span>
+    <h2>4. AES-GCM — chiffrement symétrique</h2>
+
+    <h3>4.1 — L'analogie : le coffre-fort</h3>
+
+    <p>
+        Un chiffrement symétrique utilise <strong>une seule
+        clé</strong> pour chiffrer et pour déchiffrer. C'est comme
+        un coffre-fort : on a une combinaison (la clé), on ferme
+        avec, on ouvre avec la même combinaison. Aucun des deux
+        côtés n'a besoin de plus que la clé.
+    </p>
+
+    <p>
+        AES (Advanced Encryption Standard) est l'algorithme
+        symétrique le plus utilisé au monde. Il existe en deux
+        tailles principales : AES-128 (clé de 16 octets) et
+        AES-256 (clé de 32 octets). On utilise aujourd'hui
+        <strong>AES-256</strong>, car il offre une marge de
+        sécurité confortable.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> AES est comme un coffre-fort
+        très robuste. La clé est la combinaison. Perdre la clé,
+        c'est perdre le contenu. La confier à quelqu'un, c'est lui
+        donner accès au contenu.
+    </div>
+
+    <h3>4.2 — Le mode GCM</h3>
+
+    <p>
+        AES ne chiffre qu'un bloc de 16 octets à la fois. Pour
+        chiffrer un texte plus long, il faut un <strong>mode
+        d'opération</strong>. Les plus courants :
+    </p>
+    <table>
+        <tr><th>Mode</th><th>Propriétés</th><th>Recommandé</th></tr>
+        <tr>
+            <td>ECB</td>
+            <td>Chiffre chaque bloc indépendamment. Identique à un
+                puzzle dont les pièces restent reconnaissables.
+                <strong>À éviter absolument.</strong></td>
+            <td>Non</td>
+        </tr>
+        <tr>
+            <td>CBC</td>
+            <td>Chaîne les blocs. Nécessite un IV aléatoire.
+                Vérification d'intégrité séparée.</td>
+            <td>Obsolète</td>
+        </tr>
+        <tr>
+            <td><strong>GCM</strong></td>
+            <td>Chiffre <strong>et authentifie</strong> en une
+                seule opération. Détecte toute altération. Rapide.</td>
+            <td>Oui</td>
+        </tr>
+    </table>
+
+    <p>
+        GCM est aujourd'hui le mode par défaut recommandé. Il a un
+        avantage décisif : <strong>il combine chiffrement et
+        vérification d'intégrité</strong>. Si quelqu'un modifie un
+        octet du message chiffré, GCM le détecte et lève une
+        exception au déchiffrement. Pas besoin d'ajouter un HMAC
+        séparé.
+    </p>
+
+    <div class="callout important">
+        <strong>Propriété —</strong> GCM nécessite un
+        <strong>IV</strong> (Initialization Vector, aussi appelé
+        <em>nonce</em>) de 12 octets, <strong>unique pour chaque
+        chiffrement</strong> avec la même clé. Réutiliser un IV
+        avec la même clé casse complètement la sécurité.
+    </div>
+
+    <h3>4.3 — Le code Java</h3>
+
+<pre><code>import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
+
+public class AesExample {
+    public static void main(String[] args) throws Exception {
+        String texte = "Message confidentiel";
+        byte[] cle = new byte[32]; // 32 octets = AES-256
+        new SecureRandom().nextBytes(cle);
+
+        // 1. Chiffrement
+        byte[] iv = new byte[12];
+        new SecureRandom().nextBytes(iv);
+
+        Cipher chiffreur = Cipher.getInstance("AES/GCM/NoPadding");
+        chiffreur.init(Cipher.ENCRYPT_MODE,
+                       new SecretKeySpec(cle, "AES"),
+                       new GCMParameterSpec(128, iv));
+
+        byte[] chiffre = chiffreur.doFinal(texte.getBytes(StandardCharsets.UTF_8));
+
+        System.out.println("Chiffre (base64) : " + Base64.getEncoder().encodeToString(chiffre));
+
+        // 2. Déchiffrement
+        Cipher dechiffreur = Cipher.getInstance("AES/GCM/NoPadding");
+        dechiffreur.init(Cipher.DECRYPT_MODE,
+                         new SecretKeySpec(cle, "AES"),
+                         new GCMParameterSpec(128, iv));
+
+        byte[] dechiffre = dechiffreur.doFinal(chiffre);
+        System.out.println("Déchiffré : " + new String(dechiffre, StandardCharsets.UTF_8));
+    }
+}</code></pre>
+
+    <p>
+        <strong>Lecture du code :</strong>
+    </p>
+    <ul>
+        <li><code>new byte[32]</code> puis
+            <code>SecureRandom().nextBytes(cle)</code> : clé AES-256
+            aléatoire. Ne jamais utiliser <code>Random</code> (non
+            cryptographique) ; utiliser
+            <code>SecureRandom</code>.</li>
+        <li><code>new byte[12]</code> : IV de 12 octets, généré
+            aléatoirement à chaque chiffrement.</li>
+        <li><code>Cipher.getInstance("AES/GCM/NoPadding")</code> :
+            algorithme/mode/padding. GCM n'utilise pas de padding
+            (d'où <code>NoPadding</code>).</li>
+        <li><code>GCMParameterSpec(128, iv)</code> : le
+            <code>128</code> est la taille du tag d'authentification
+            en bits. 128 est la valeur standard.</li>
+        <li><code>doFinal</code> : effectue le chiffrement (ou le
+            déchiffrement). Lève <code>AEADBadTagException</code>
+            si l'intégrité est compromise au déchiffrement.</li>
+    </ul>
+
+    <div class="schema">
+        <h4>Schéma 3 — Chiffrement symétrique AES-GCM</h4>
+        <canvas id="schemaAes" width="900" height="320"></canvas>
+        <p class="caption">
+            La même clé sert à chiffrer et à déchiffrer. L'IV est
+            généré aléatoirement à chaque chiffrement et transmis
+            avec le message. GCM ajoute un tag d'authentification
+            pour détecter toute altération.
+        </p>
+    </div>
+
+    <h3>4.4 — Piège : réutiliser l'IV</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un audit signale
+        « IV reuse ». Pire : deux messages chiffrés avec le même
+        IV et la même clé peuvent être déchiffrés sans la clé.
+        <p><strong>Cause —</strong> l'IV a été codé en dur ou
+        généré une seule fois au démarrage.</p>
+        <p><strong>Remède —</strong> générer un nouvel IV
+        aléatoire à <strong>chaque</strong> chiffrement, avec
+        <code>SecureRandom</code>. Transmettre l'IV avec le
+        message (il n'est pas secret).</p>
+    </div>
+
+    <h3>4.5 — Piège : utiliser <code>Random</code> au lieu de <code>SecureRandom</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un audit signale
+        « weak random ».
+        <p><strong>Cause —</strong> <code>java.util.Random</code>
+        est un générateur pseudo-aléatoire déterministe :
+        connaissant l'état interne, on peut prédire les valeurs
+        suivantes.</p>
+        <p><strong>Remède —</strong> utiliser
+        <code>java.security.SecureRandom</code> pour toute valeur
+        secrète (clé, IV, sel, nonce).</p>
+    </div>
+
+    <h3>4.6 — Piège : ignorer <code>AEADBadTagException</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un message altéré est déchiffré
+        comme si de rien n'était (ou plante avec une exception non
+        gérée).
+        <p><strong>Cause —</strong> GCM lève une exception si
+        l'intégrité est compromise ; l'exception n'est pas
+        attrapée.</p>
+        <p><strong>Remède —</strong> entourer le
+        <code>doFinal</code> de déchiffrement d'un
+        <code>try/catch (AEADBadTagException)</code> et traiter le
+        cas comme un message invalide, sans donner de détail à
+        l'utilisateur.</p>
+    </div>
+
+    <div class="exercise">
+        <span class="level medium">TP guidé 3 — 45 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Chiffrer puis déchiffrer un texte avec AES-GCM,
+            transmettre le message chiffré et l'IV, détecter une
+            altération.
+        </p>
+
+        <h3>Étapes</h3>
+        <ol>
+            <li><strong>Étape 1 — Chiffrement</strong> : créer
+                <code>AesCrypt.java</code> avec une méthode
+                <code>chiffrer(String texte, byte[] cle)</code> qui
+                renvoie un objet contenant l'IV et le chiffré.</li>
+            <li><strong>Étape 2 — Déchiffrement</strong> : ajouter
+                <code>dechiffrer(byte[] iv, byte[] chiffre, byte[] cle)</code>.</li>
+            <li><strong>Étape 3 — Test normal</strong> : chiffrer
+                <code>"Message secret"</code>, afficher le base64,
+                déchiffrer, comparer au texte d'origine.</li>
+            <li><strong>Étape 4 — Altération</strong> : modifier un
+                octet du chiffré, tenter le déchiffrement →
+                observer <code>AEADBadTagException</code>.</li>
+            <li><strong>Étape 5 — Mauvaise clé</strong> : tenter le
+                déchiffrement avec une autre clé → même exception.</li>
+        </ol>
+
+        <h3>Résultat attendu</h3>
+<pre><code>$ java AesCrypt
+Texte    : Message secret
+Chiffre  : AQIz7bF9kL2pQ3xY... (base64)
+Déchiffre : Message secret
+Correct  : true
+
+# Avec altération
+Déchiffre : (erreur AEADBadTagException)
+Le message a été altéré
+
+# Avec mauvaise clé
+Déchiffre : (erreur AEADBadTagException)
+La clé est incorrecte</code></pre>
+
+        <h3>QCM de vérification</h3>
+        <div class="qcm">
+            <ol>
+                <li>AES est un chiffrement :
+                    <div class="choix">
+                        <label><input type="radio" name="q7a"> symétrique : une seule clé pour chiffrer et déchiffrer</label>
+                        <label><input type="radio" name="q7b"> asymétrique : une clé publique et une clé privée</label>
+                        <label><input type="radio" name="q7c"> à sens unique : on ne peut pas déchiffrer</label>
+                    </div>
+                </li>
+                <li>Le mode GCM a l'avantage de :
+                    <div class="choix">
+                        <label><input type="radio" name="q8a"> être plus rapide que les autres</label>
+                        <label><input type="radio" name="q8b"> combiner chiffrement et vérification d'intégrité</label>
+                        <label><input type="radio" name="q8c"> ne pas nécessiter de clé</label>
+                    </div>
+                </li>
+                <li>L'IV doit être :
+                    <div class="choix">
+                        <label><input type="radio" name="q9a"> secret, comme la clé</label>
+                        <label><input type="radio" name="q9b"> unique pour chaque chiffrement, mais peut être public</label>
+                        <label><input type="radio" name="q9c"> toujours identique pour un même message</label>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 4 — RSA
+============================================================ -->
+<section id="seq4">
+    <span class="sequence">Séquence 4 — 1 h 30</span>
+    <h2>5. RSA — chiffrement asymétrique</h2>
+
+    <h3>5.1 — L'analogie : la boîte aux lettres</h3>
+
+    <p>
+        Un chiffrement asymétrique utilise <strong>deux clés</strong>
+        différentes : une <strong>clé publique</strong> et une
+        <strong>clé privée</strong>. Ce qui est chiffré avec la clé
+        publique ne peut être déchiffré qu'avec la clé privée
+        correspondante. Et inversement.
+    </p>
+
+    <p>
+        C'est comme une boîte aux lettres publique : tout le monde
+        peut y déposer un courrier (chiffrer avec la clé publique),
+        mais seul le propriétaire peut l'ouvrir (déchiffrer avec la
+        clé privée). La clé publique est publiée partout, la clé
+        privée reste secrète.
+    </p>
+
+    <div class="callout info">
+        <strong>Analogie —</strong> RSA est comme une boîte aux
+        lettres publique. La fente est accessible à tous (clé
+        publique), mais seul le propriétaire a la clef de la boîte
+        (clé privée).
+    </div>
+
+    <h3>5.2 — Pourquoi RSA n'est pas utilisé pour chiffrer du texte long</h3>
+
+    <p>
+        RSA est <strong>très lent</strong> comparé à AES. De plus,
+        il ne peut chiffrer qu'un texte plus court que la taille de
+        la clé (moins le padding). Pour une clé de 2048 bits, on ne
+        peut chiffrer qu'environ 190 octets.
+    </p>
+
+    <p>
+        En pratique, on n'utilise RSA que pour deux choses :
+    </p>
+    <ul>
+        <li><strong>Chiffrer une clé AES</strong> (32 octets),
+            qu'on utilise ensuite pour chiffrer le vrai message.
+            C'est le principe hybride, utilisé par TLS.</li>
+        <li><strong>Signer</strong> un hash (32 octets) pour
+            prouver l'identité de l'expéditeur.</li>
+    </ul>
+
+    <p>
+        Chiffrer un texte long directement avec RSA est une
+        <strong>erreur</strong>. On ne le fait jamais en pratique.
+        On le montre ici uniquement pour comprendre le mécanisme.
+    </p>
+
+    <h3>5.3 — Le code Java</h3>
+
+<pre><code>import javax.crypto.Cipher;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.util.Base64;
+
+public class RsaExample {
+    public static void main(String[] args) throws Exception {
+        // 1. Générer une paire de clés (2048 bits)
+        KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+        gen.initialize(2048);
+        KeyPair paire = gen.generateKeyPair();
+
+        String texte = "Message court";
+
+        // 2. Chiffrer avec la clé publique
+        Cipher chiffreur = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        chiffreur.init(Cipher.ENCRYPT_MODE, paire.getPublic());
+        byte[] chiffre = chiffreur.doFinal(texte.getBytes(StandardCharsets.UTF_8));
+
+        System.out.println("Chiffré (base64) : " + Base64.getEncoder().encodeToString(chiffre));
+
+        // 3. Déchiffrer avec la clé privée
+        Cipher dechiffreur = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        dechiffreur.init(Cipher.DECRYPT_MODE, paire.getPrivate());
+        byte[] dechiffre = dechiffreur.doFinal(chiffre);
+
+        System.out.println("Déchiffré : " + new String(dechiffre, StandardCharsets.UTF_8));
+    }
+}</code></pre>
+
+    <p>
+        <strong>Lecture du code :</strong>
+    </p>
+    <ul>
+        <li><code>KeyPairGenerator.getInstance("RSA")</code> puis
+            <code>initialize(2048)</code> : génère une paire de
+            clés RSA de 2048 bits. C'est la taille minimale
+            recommandée aujourd'hui.</li>
+        <li><code>paire.getPublic()</code> et
+            <code>paire.getPrivate()</code> : les deux clés.</li>
+        <li><code>RSA/ECB/OAEPWithSHA-256AndMGF1Padding</code> :
+            algorithme RSA avec le padding OAEP, obligatoire en
+            pratique. Sans padding (<code>NoPadding</code>), RSA
+            est vulnérable.</li>
+        <li><code>doFinal</code> : comme pour AES, effectue le
+            chiffrement ou déchiffrement.</li>
+    </ul>
+
+    <div class="schema">
+        <h4>Schéma 4 — Chiffrement asymétrique RSA</h4>
+        <canvas id="schemaRsa" width="900" height="320"></canvas>
+        <p class="caption">
+            La clé publique est utilisée pour chiffrer, la clé privée
+            pour déchiffrer. La clé publique peut être publiée
+            partout, la clé privée reste secrète. C'est le principe
+            de la boîte aux lettres.
+        </p>
+    </div>
+
+    <h3>5.4 — Le modèle hybride</h3>
+
+    <p>
+        Pour chiffrer un texte long en pratique, on combine les
+        deux approches :
+    </p>
+    <ol>
+        <li>Générer une clé AES aléatoire (32 octets).</li>
+        <li>Chiffrer le texte avec AES-GCM.</li>
+        <li>Chiffrer la clé AES avec RSA.</li>
+        <li>Transmettre : clé AES chiffrée + message chiffré.</li>
+    </ol>
+
+    <p>
+        C'est ce que fait TLS, c'est ce que font tous les systèmes
+        réels. RSA résout le problème du <em>partage de clé</em> ;
+        AES résout le problème de la <em>performance</em>.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 5 — Modèle hybride RSA + AES</h4>
+        <canvas id="schemaHybride" width="900" height="300"></canvas>
+        <p class="caption">
+            Une clé AES est générée aléatoirement. Elle chiffre le
+            message avec AES-GCM. Elle est elle-même chiffrée avec
+            RSA et transmise avec le message. Le destinataire
+            déchiffre la clé AES avec sa clé privée, puis le message
+            avec la clé AES.
+        </p>
+    </div>
+
+    <h3>5.5 — Piège : utiliser <code>NoPadding</code></h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un audit signale « RSA without
+        padding ».
+        <p><strong>Cause —</strong> RSA sans padding est
+        vulnérable à des attaques permettant de déchiffrer des
+        messages ou de forger des signatures.</p>
+        <p><strong>Remède —</strong> toujours utiliser
+        <code>RSA/ECB/OAEPWithSHA-256AndMGF1Padding</code> (chiffrement)
+        ou un padding de signature adapté.</p>
+    </div>
+
+    <h3>5.6 — Piège : utiliser une clé RSA trop courte</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un audit signale « RSA key
+        size too small ».
+        <p><strong>Cause —</strong> des clés de 1024 bits ou moins
+        sont considérées comme cassables à moyen terme.</p>
+        <p><strong>Remède —</strong> minimum 2048 bits. 4096 pour
+        les systèmes à longue durée de vie.</p>
+    </div>
+
+    <h3>5.7 — Piège : chiffrer du texte long directement avec RSA</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong>
+        <code>IllegalBlockSizeException: Data must not be longer than ...</code>.
+        <p><strong>Cause —</strong> RSA ne peut chiffrer qu'un bloc
+        de taille limitée (moins que la taille de la clé, moins le
+        padding).</p>
+        <p><strong>Remède —</strong> utiliser le modèle hybride
+        (AES pour le texte, RSA pour la clé AES).</p>
+    </div>
+
+    <div class="exercise">
+        <span class="level medium">TP guidé 4 — 40 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Générer une paire RSA, chiffrer un texte court,
+            déchiffrer. Puis mettre en évidence la limite de taille.
+        </p>
+
+        <h3>Étapes</h3>
+        <ol>
+            <li><strong>Étape 1 — Génération</strong> : créer
+                <code>RsaBasic.java</code> qui génère une paire
+                RSA 2048 et affiche la taille des clés en octets.</li>
+            <li><strong>Étape 2 — Chiffrement</strong> : chiffrer
+                <code>"Message court"</code> avec la clé publique,
+                afficher le chiffré en base64.</li>
+            <li><strong>Étape 3 — Déchiffrement</strong> : déchiffrer
+                avec la clé privée, vérifier le texte.</li>
+            <li><strong>Étape 4 — Limite</strong> : essayer avec un
+                texte de 500 caractères → observer
+                <code>IllegalBlockSizeException</code>.</li>
+            <li><strong>Étape 5 — Hybride</strong> : implémenter le
+                modèle hybride (clé AES aléatoire + AES + RSA) pour
+                chiffrer un texte de 500 caractères.</li>
+        </ol>
+
+        <h3>Résultat attendu</h3>
+<pre><code>$ java RsaBasic
+Clé publique : 294 octets
+Clé privée   : 1218 octets
+Chiffré      : kL3pQ7xY... (base64)
+Déchiffré    : Message court
+Correct      : true
+
+# Test avec un texte long
+Exception : IllegalBlockSizeException: Data must not be longer than 190 bytes
+
+# Mode hybride
+Texte long chiffré avec succès
+Déchiffré : (texte de 500 caractères, correct)</code></pre>
+
+        <h3>QCM de vérification</h3>
+        <div class="qcm">
+            <ol>
+                <li>RSA est un chiffrement :
+                    <div class="choix">
+                        <label><input type="radio" name="q10a"> symétrique</label>
+                        <label><input type="radio" name="q10b"> asymétrique</label>
+                        <label><input type="radio" name="q10c"> à sens unique</label>
+                    </div>
+                </li>
+                <li>Pour chiffrer un texte long, on utilise :
+                    <div class="choix">
+                        <label><input type="radio" name="q11a"> RSA directement</label>
+                        <label><input type="radio" name="q11b"> AES pour le texte, RSA pour la clé AES</label>
+                        <label><input type="radio" name="q11c"> deux RSA en parallèle</label>
+                    </div>
+                </li>
+                <li>La clé publique RSA peut être :
+                    <div class="choix">
+                        <label><input type="radio" name="q12a"> gardée secrète</label>
+                        <label><input type="radio" name="q12b"> publiée partout</label>
+                        <label><input type="radio" name="q12c"> identique à la clé privée</label>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     SÉQUENCE 5 — ENCODAGE
+============================================================ -->
+<section id="seq5">
+    <span class="sequence">Séquence 5 — 1 h 30</span>
+    <h2>6. Encodage et transport</h2>
+
+    <h3>6.1 — Le problème : du binaire dans du texte</h3>
+
+    <p>
+        Un message chiffré est une suite d'octets arbitraires. Ces
+        octets peuvent contenir n'importe quelle valeur de
+        <code>0x00</code> à <code>0xFF</code>. Or, les protocoles
+        textuels (JSON, XML, URL, email, HTTP headers) ne peuvent
+        transporter que des caractères imprimables.
+    </p>
+
+    <p>
+        Si vous mettez des octets binaires dans du JSON sans les
+        encoder, vous obtenez des erreurs de parsing ou des
+        corruptions. Il faut <strong>encoder le binaire en
+        texte</strong>, d'une manière qui soit réversible.
+    </p>
+
+    <h3>6.2 — Base64</h3>
+
+    <p>
+        Base64 est le standard pour cela. Il transforme 3 octets
+        binaires en 4 caractères ASCII (lettres, chiffres,
+        <code>+</code>, <code>/</code>, avec <code>=</code> pour le
+        padding). Le message encodé fait environ 33% plus long que
+        le message original, mais reste entièrement textuel.
+    </p>
+
+    <div class="schema">
+        <h4>Schéma 6 — Encodage base64</h4>
+        <canvas id="schemaBase64" width="900" height="260"></canvas>
+        <p class="caption">
+            Trois octets binaires (24 bits) sont découpés en quatre
+            groupes de 6 bits, chacun converti en un caractère
+            ASCII imprimable. Le résultat est 33% plus long, mais
+            entièrement transportable en JSON, URL, email, etc.
+        </p>
+    </div>
+
+    <h3>6.3 — Utilisation en Java</h3>
+
+<pre><code>import java.util.Base64;
+
+byte[] binaire = ...;
+String texte = Base64.getEncoder().encodeToString(binaire);
+
+byte[] decode = Base64.getDecoder().decode(texte);
+
+// Variante pour URL (remplace + et / par - et _)
+String urlSafe = Base64.getUrlEncoder().encodeToString(binaire);</code></pre>
+
+    <p>
+        Il existe trois variantes :
+    </p>
+    <table>
+        <tr><th>Méthode</th><th>Usage</th></tr>
+        <tr><td><code>getEncoder()</code></td><td>Standard, pour JSON, email</td></tr>
+        <tr><td><code>getUrlEncoder()</code></td><td>Pour les URL et noms de fichiers (+ → -, / → _)</td></tr>
+        <tr><td><code>getMimeEncoder()</code></td><td>Pour l'email, avec sauts de ligne</td></tr>
+    </table>
+
+    <h3>6.4 — Le format typique d'un message chiffré transporté</h3>
+
+    <p>
+        Quand on transporte un message chiffré, on transmet
+        généralement deux choses :
+    </p>
+    <ul>
+        <li>l'<strong>IV</strong> (ou le nonce), en base64 ;</li>
+        <li>le <strong>chiffré</strong>, en base64.</li>
+    </ul>
+
+    <p>
+        Les deux peuvent être combinés dans une seule chaîne, ou
+        dans un objet JSON. Exemple :
+    </p>
+
+<pre><code>{
+  "iv": "AQIz7bF9kL2pQ3xY...",
+  "ciphertext": "kL3pQ7xY+9aB...",
+  "algorithm": "AES-256-GCM"
+}</code></pre>
+
+    <p>
+        C'est ce type de structure qu'on retrouve dans les API
+        REST, dans les tokens JWT, dans les messages d'un protocole
+        applicatif.
+    </p>
+
+    <h3>6.5 — Piège : confondre encodage et chiffrement</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> un message sensible est publié
+        en base64 en croyant qu'il est chiffré.
+        <p><strong>Cause —</strong> base64 n'est pas un
+        chiffrement. C'est un encodage réversible sans clé :
+        n'importe qui peut décoder.</p>
+        <p><strong>Remède —</strong> base64 ne protège rien. Il
+        sert uniquement à transporter du binaire dans du texte.
+        Pour protéger, il faut chiffrer (AES, RSA) avant d'encoder
+        en base64.</p>
+    </div>
+
+    <h3>6.6 — Piège : oublier de transmettre l'IV</h3>
+
+    <div class="callout danger">
+        <strong>Symptôme —</strong> impossible de déchiffrer un
+        message AES-GCM reçu.
+        <p><strong>Cause —</strong> l'IV n'a pas été transmis. Il
+        est indispensable au déchiffrement.</p>
+        <p><strong>Remède —</strong> toujours transmettre l'IV avec
+        le chiffré. L'IV n'est pas secret, il peut être public.</p>
+    </div>
+
+    <div class="exercise">
+        <span class="level medium">TP guidé 5 — 45 min</span>
+
+        <h3>Objectif</h3>
+        <p>
+            Créer une classe utilitaire
+            <code>CryptoMessage</code> qui combine AES, base64 et
+            transport JSON, et l'utiliser dans un petit programme de
+            démonstration.
+        </p>
+
+        <h3>Étapes</h3>
+        <ol>
+            <li><strong>Étape 1 — Encoder/décoder</strong> : créer
+                une classe qui convertit un <code>byte[]</code> en
+                base64 (URL-safe) et inversement.</li>
+            <li><strong>Étape 2 — Chiffrer</strong> : ajouter une
+                méthode qui prend un texte et une clé, génère un
+                IV, chiffre avec AES-GCM, et renvoie une chaîne
+                au format <code>iv|ciphertext</code> en base64.</li>
+            <li><strong>Étape 3 — Déchiffrer</strong> : ajouter la
+                méthode inverse qui parse <code>iv|ciphertext</code>,
+                décode le base64 et déchiffre.</li>
+            <li><strong>Étape 4 — Test normal</strong> : chiffrer
+                <code>"Message test"</code>, afficher, déchiffrer,
+                comparer.</li>
+            <li><strong>Étape 5 — Format JSON</strong> : produire
+                une chaîne JSON <code>{"iv":"...","ct":"..."}</code>
+                au lieu du format <code>iv|ct</code>, et vérifier
+                qu'elle reste transportable dans un fichier texte.</li>
+        </ol>
+
+        <h3>Résultat attendu</h3>
+<pre><code>$ java DemoCrypto
+Texte     : Message test
+Chiffré   : {"iv":"AQIz7bF9kL2pQ3xY...","ct":"kL3pQ7xY..."}
+Déchiffré : Message test
+Correct   : true</code></pre>
+
+        <h3>QCM de vérification</h3>
+        <div class="qcm">
+            <ol>
+                <li>Base64 sert à :
+                    <div class="choix">
+                        <label><input type="radio" name="q13a"> chiffrer un message</label>
+                        <label><input type="radio" name="q13b"> encoder du binaire en texte, de manière réversible sans clé</label>
+                        <label><input type="radio" name="q13c"> compresser un message</label>
+                    </div>
+                </li>
+                <li>Un message en base64 :
+                    <div class="choix">
+                        <label><input type="radio" name="q14a"> est protégé contre la lecture</label>
+                        <label><input type="radio" name="q14b"> peut être décodé par n'importe qui</label>
+                        <label><input type="radio" name="q14c"> doit être gardé secret</label>
+                    </div>
+                </li>
+                <li>L'IV d'un message chiffré doit être :
+                    <div class="choix">
+                        <label><input type="radio" name="q15a"> gardé secret</label>
+                        <label><input type="radio" name="q15b"> transmis avec le chiffré</label>
+                        <label><input type="radio" name="q15c"> identique pour tous les messages</label>
+                    </div>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     FICHE À RETENIR
+============================================================ -->
+<section id="fiche">
+    <h2>7. Fiche « à retenir par cœur »</h2>
+
+    <div class="fiche">
+        <h3>Les 4 briques et leur rôle</h3>
+        <div class="grille">
+            <div class="carte">
+                <strong>Hash SHA-256</strong><br>
+                Empreinte d'un texte.<br>
+                Vérifie l'<em>intégrité</em>.<br>
+                <code>MessageDigest.getInstance("SHA-256")</code>
+            </div>
+            <div class="carte">
+                <strong>HMAC-SHA256</strong><br>
+                Hash + clé secrète.<br>
+                Vérifie l'<em>intégrité + l'origine</em>.<br>
+                <code>Mac.getInstance("HmacSHA256")</code>
+            </div>
+            <div class="carte">
+                <strong>AES-256-GCM</strong><br>
+                Chiffrement symétrique rapide.<br>
+                <em>Confidentialité + intégrité</em>.<br>
+                <code>Cipher.getInstance("AES/GCM/NoPadding")</code>
+            </div>
+            <div class="carte">
+                <strong>RSA-2048</strong><br>
+                Chiffrement asymétrique lent.<br>
+                <em>Échange de clé</em> ou <em>signature</em>.<br>
+                <code>Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")</code>
+            </div>
+        </div>
+
+        <h3>Quand utiliser quoi</h3>
+        <table>
+            <tr><th>Besoin</th><th>Brique</th></tr>
+            <tr>
+                <td>Vérifier qu'un fichier n'a pas été altéré</td>
+                <td>Hash SHA-256</td>
+            </tr>
+            <tr>
+                <td>Vérifier qu'un message vient bien de la bonne personne</td>
+                <td>HMAC-SHA256</td>
+            </tr>
+            <tr>
+                <td>Chiffrer un message (confidentialité)</td>
+                <td>AES-256-GCM</td>
+            </tr>
+            <tr>
+                <td>Échanger une clé AES sans l'avoir partagée au préalable</td>
+                <td>RSA (chiffrer la clé AES)</td>
+            </tr>
+            <tr>
+                <td>Transporter du binaire dans du texte</td>
+                <td>Base64</td>
+            </tr>
+        </table>
+
+        <h3>Les 4 pièges à ne jamais oublier</h3>
+        <table>
+            <tr><th>Piège</th><th>Conséquence</th></tr>
+            <tr>
+                <td>Réutiliser l'IV AES</td>
+                <td>Cassage complet du chiffrement</td>
+            </tr>
+            <tr>
+                <td>Utiliser <code>Random</code> au lieu de <code>SecureRandom</code></td>
+                <td>Clés/IV prédictibles</td>
+            </tr>
+            <tr>
+                <td>RSA sans padding OAEP</td>
+                <td>Déchiffrement possible par un attaquant</td>
+            </tr>
+            <tr>
+                <td>Croire que base64 chiffre</td>
+                <td>Fuite de données en clair</td>
+            </tr>
+        </table>
+
+        <h3>Les 4 commandes à connaître</h3>
+        <table>
+            <tr><th>Commande</th><th>Utilité</th></tr>
+            <tr><td><code>sha256sum fichier</code></td><td>Hash d'un fichier (Linux/Mac)</td></tr>
+            <tr><td><code>openssl dgst -sha256 fichier</code></td><td>Hash avec OpenSSL</td></tr>
+            <tr><td><code>openssl enc -aes-256-gcm -in clair -out chiffre</code></td><td>Chiffrement AES en ligne de commande</td></tr>
+            <tr><td><code>openssl genrsa -out cle.pem 2048</code></td><td>Générer une clé RSA 2048</td></tr>
+        </table>
+    </div>
+</section>
+
+<!-- ============================================================
+     BILAN
+============================================================ -->
+<section id="bilan">
+    <h2>8. Bilan — Jour 4</h2>
+
+    <div class="callout success">
+        <ul>
+            <li>Un <strong>hash</strong> vérifie l'intégrité d'un
+                texte, mais ne prouve pas l'identité de
+                l'expéditeur.</li>
+            <li>Un <strong>HMAC</strong> ajoute une clé secrète au
+                hash, ce qui prouve l'identité de l'expéditeur.</li>
+            <li><strong>AES-GCM</strong> chiffre et authentifie en
+                une seule opération. C'est le mode recommandé
+                aujourd'hui.</li>
+            <li><strong>RSA</strong> est asymétrique : la clé
+                publique chiffre, la clé privée déchiffre. Il est
+                lent et ne sert qu'à échanger des clés ou signer.</li>
+            <li>Le <strong>modèle hybride</strong> combine AES pour
+                le texte et RSA pour la clé AES. C'est ce que fait
+                TLS.</li>
+            <li><strong>Base64</strong> encode du binaire en texte,
+                sans le chiffrer. C'est un encodage, pas un
+                chiffrement.</li>
+            <li>Les pièges à éviter : réutiliser l'IV, utiliser
+                <code>Random</code>, RSA sans padding, croire que
+                base64 chiffre.</li>
+        </ul>
+    </div>
+
+    <h3>Ce qu'on n'a pas fait</h3>
+    <p>
+        Cette journée s'est concentrée sur les <strong>quatre
+        briques</strong> de la cryptographie appliquée. On n'a pas
+        couvert :
+    </p>
+    <ul>
+        <li><strong>TLS</strong> — comment ces briques s'assemblent
+            dans un protocole réseau complet. À voir en
+            spécialisation.</li>
+        <li><strong>Certificats X.509</strong> et PKI — comment on
+            fait confiance à une clé publique. À voir en
+            spécialisation.</li>
+        <li><strong>Signature numérique</strong> — usage de RSA
+            pour signer. Mentionné, non pratiqué.</li>
+        <li><strong>Stockage de mots de passe</strong> (bcrypt,
+            Argon2) — usage du hash en pratique. Mentionné, non
+            pratiqué.</li>
+    </ul>
+
+    <h3>Pour aller plus loin</h3>
+    <ul>
+        <li><em>Practical Cryptography in Python</em> — Seth James
+            Nielson, Christopher K. Monson</li>
+        <li>Documentation Oracle : <code>javax.crypto</code>,
+            <code>java.security</code></li>
+        <li>OWASP Cryptographic Storage Cheat Sheet — pour les
+            bonnes pratiques en production</li>
+    </ul>
+
+    <h3>Travail à remettre pour le Jour 4</h3>
+
+<pre><code>jour4/
+│
+├── HashText.java
+├── HmacSigner.java
+├── HmacVerifier.java
+├── AesCrypt.java
+├── RsaBasic.java
+└── CryptoMessage.java</code></pre>
+
+    <p>Chaque fichier doit :</p>
+    <ul>
+        <li>compiler sans warning ;</li>
+        <li>utiliser <code>StandardCharsets.UTF_8</code> pour tous
+            les encodages de texte ;</li>
+        <li>utiliser <code>SecureRandom</code> pour toutes les
+            valeurs aléatoires ;</li>
+        <li>gérer les exceptions de crypto (pas de
+            <code>throws Exception</code> dans le
+            <code>main</code>).</li>
+    </ul>
+</section>
+
+</main>
+
+<footer>
+    <p><strong>Programmation Réseau — Jour 4</strong></p>
+    <p>Cryptographie appliquée au chiffrement de textes</p>
+    <p>Java 17+ · java.security · javax.crypto</p>
+</footer>
+
+<!-- ============================================================
+     SCHÉMAS CANVAS — FOND BLANC, CONTRASTE ÉLEVÉ
+============================================================ -->
+<script>
+(function () {
+    "use strict";
+
+    const BG          = "#ffffff";
+    const TXT_MAIN    = "#1a1a1a";
+    const TXT_DIM     = "#4a5568";
+    const TXT_ACCENT  = "#8a6508";
+    const TXT_CYAN    = "#2c5282";
+    const TXT_GREEN   = "#2f6b3a";
+    const TXT_RED     = "#8b2c2c";
+    const BOX_FILL    = "#eef1f5";
+    const BOX_FILL_ACCENT = "#fdf8ee";
+    const BOX_FILL_GREEN  = "#eef6ee";
+    const BOX_FILL_RED    = "#f8eeee";
+    const BOX_FILL_BLUE   = "#eef4fa";
+    const BOX_STROKE  = "#4a5568";
+    const ARROW       = "#2c5282";
+
+    function setup(id) {
+        const c = document.getElementById(id);
+        if (!c) return null;
+        return { c, ctx: c.getContext("2d"), w: c.width, h: c.height };
+    }
+
+    function fond(ctx, w, h) {
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, w, h);
+    }
+
+    function boite(ctx, x, y, bw, bh, label, fondCouleur, texteCouleur) {
+        ctx.fillStyle = fondCouleur || BOX_FILL;
+        ctx.strokeStyle = BOX_STROKE;
+        ctx.lineWidth = 2;
+        ctx.fillRect(x, y, bw, bh);
+        ctx.strokeRect(x, y, bw, bh);
+        ctx.fillStyle = texteCouleur || TXT_MAIN;
+        ctx.font = "bold 14px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        const lignes = label.split("\n");
+        const dy = (lignes.length - 1) * 8;
+        lignes.forEach((l, i) =>
+            ctx.fillText(l, x + bw / 2, y + bh / 2 + 5 + i * 16 - dy));
+        ctx.textAlign = "left";
+        return { x, y, w: bw, h: bh };
+    }
+
+    function fleche(ctx, x1, y1, x2, y2, couleur, epaisseur) {
+        ctx.strokeStyle = couleur || ARROW;
+        ctx.lineWidth = epaisseur || 2.5;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.fillStyle = couleur || ARROW;
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - 12 * Math.cos(angle - 0.4),
+                   y2 - 12 * Math.sin(angle - 0.4));
+        ctx.lineTo(x2 - 12 * Math.cos(angle + 0.4),
+                   y2 - 12 * Math.sin(angle + 0.4));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    /* ---------- Schéma 1 : hash ---------- */
+    const s1 = setup("schemaHash");
+    if (s1) {
+        const { ctx, w, h } = s1;
+        fond(ctx, w, h);
+
+        boite(ctx, 40, 90, 240, 80, "Texte d'entrée\n(longueur quelconque)", BOX_FILL_BLUE, TXT_CYAN);
+        boite(ctx, 370, 90, 160, 80, "SHA-256", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 620, 90, 240, 80, "Empreinte\n32 octets = 64 hex", BOX_FILL_GREEN, TXT_GREEN);
+
+        fleche(ctx, 280, 130, 370, 130);
+        fleche(ctx, 530, 130, 620, 130);
+
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("même texte → même empreinte", w / 2, 220);
+        ctx.fillText("un caractère changé → empreinte complètement différente", w / 2, 240);
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma 2 : hash vs HMAC ---------- */
+    const s2 = setup("schemaHmac");
+    if (s2) {
+        const { ctx, w, h } = s2;
+        fond(ctx, w, h);
+
+        // Hash simple
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.fillText("Hash simple — n'importe qui peut le recalculer", 40, 40);
+
+        boite(ctx, 40, 60, 180, 60, "Texte", BOX_FILL_BLUE, TXT_CYAN);
+        boite(ctx, 320, 60, 120, 60, "SHA-256", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 540, 60, 200, 60, "Hash", BOX_FILL_GREEN, TXT_GREEN);
+        fleche(ctx, 220, 90, 320, 90);
+        fleche(ctx, 440, 90, 540, 90);
+
+        // HMAC
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.fillText("HMAC — seul le porteur de la clé peut le calculer", 40, 190);
+
+        boite(ctx, 40, 210, 180, 60, "Texte", BOX_FILL_BLUE, TXT_CYAN);
+        boite(ctx, 320, 210, 120, 60, "HMAC\n+ clé", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 540, 210, 200, 60, "HMAC", BOX_FILL_GREEN, TXT_GREEN);
+        fleche(ctx, 220, 240, 320, 240);
+        fleche(ctx, 440, 240, 540, 240);
+
+        ctx.fillStyle = TXT_RED;
+        ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.fillText("clé secrète", 320, 300);
+
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.textAlign = "left";
+    }
+
+    /* ---------- Schéma 3 : AES ---------- */
+    const s3 = setup("schemaAes");
+    if (s3) {
+        const { ctx, w, h } = s3;
+        fond(ctx, w, h);
+
+        boite(ctx, 40, 100, 200, 70, "Texte clair", BOX_FILL_BLUE, TXT_CYAN);
+        boite(ctx, 340, 100, 220, 70, "AES-GCM\n(clé + IV)", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 660, 100, 200, 70, "Chiffré\n+ tag", BOX_FILL_GREEN, TXT_GREEN);
+
+        fleche(ctx, 240, 135, 340, 135);
+        fleche(ctx, 560, 135, 660, 135);
+
+        // Clé + IV
+        ctx.fillStyle = TXT_RED;
+        ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.fillText("clé (32 octets)", 360, 200);
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.fillText("IV (12 octets, unique)", 360, 220);
+
+        // Déchiffrement
+        boite(ctx, 40, 260, 200, 40, "Texte clair", BOX_FILL_BLUE, TXT_CYAN);
+        boite(ctx, 340, 260, 220, 40, "AES-GCM (même clé + IV)", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 660, 260, 200, 40, "Chiffré", BOX_FILL_GREEN, TXT_GREEN);
+
+        fleche(ctx, 660, 280, 560, 280, TXT_DIM);
+        fleche(ctx, 340, 280, 240, 280, TXT_DIM);
+    }
+
+    /* ---------- Schéma 4 : RSA ---------- */
+    const s4 = setup("schemaRsa");
+    if (s4) {
+        const { ctx, w, h } = s4;
+        fond(ctx, w, h);
+
+        boite(ctx, 40, 100, 220, 70, "Texte court", BOX_FILL_BLUE, TXT_CYAN);
+        boite(ctx, 340, 100, 220, 70, "RSA\n(clé publique)", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 660, 100, 200, 70, "Chiffré", BOX_FILL_GREEN, TXT_GREEN);
+
+        fleche(ctx, 260, 135, 340, 135);
+        fleche(ctx, 560, 135, 660, 135);
+
+        // Clé publique / privée
+        ctx.fillStyle = TXT_CYAN;
+        ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.fillText("clé publique (publiée partout)", 340, 60);
+
+        boite(ctx, 340, 220, 220, 70, "RSA\n(clé privée)", BOX_FILL_ACCENT, TXT_ACCENT);
+        fleche(ctx, 440, 220, 440, 170, TXT_RED);
+        ctx.fillStyle = TXT_RED;
+        ctx.font = "bold 12px 'Consolas', monospace";
+        ctx.fillText("déchiffrement", 460, 200);
+
+        ctx.fillStyle = TXT_RED;
+        ctx.fillText("clé privée (jamais partagée)", 340, 320);
+    }
+
+    /* ---------- Schéma 5 : hybride ---------- */
+    const s5 = setup("schemaHybride");
+    if (s5) {
+        const { ctx, w, h } = s5;
+        fond(ctx, w, h);
+
+        boite(ctx, 40, 40, 180, 60, "Texte long", BOX_FILL_BLUE, TXT_CYAN);
+        boite(ctx, 300, 40, 180, 60, "AES-GCM", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 560, 40, 280, 60, "Texte chiffré", BOX_FILL_GREEN, TXT_GREEN);
+        fleche(ctx, 220, 70, 300, 70);
+        fleche(ctx, 480, 70, 560, 70);
+
+        boite(ctx, 300, 140, 180, 60, "Clé AES\n(32 octets)", BOX_FILL_ACCENT, TXT_ACCENT);
+        boite(ctx, 560, 140, 280, 60, "Clé AES chiffrée\navec RSA", BOX_FILL_RED, TXT_RED);
+        fleche(ctx, 480, 170, 560, 170);
+
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.fillText("Le destinataire déchiffre la clé AES avec sa clé privée RSA,", w / 2, 250);
+        ctx.fillText("puis le message avec la clé AES.", w / 2, 270);
+    }
+
+    /* ---------- Schéma 6 : base64 ---------- */
+    const s6 = setup("schemaBase64");
+    if (s6) {
+        const { ctx, w, h } = s6;
+        fond(ctx, w, h);
+
+        // Binaire
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.font = "bold 13px 'Consolas', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("3 octets binaires (24 bits)", 40, 40);
+
+        boite(ctx, 40, 60, 240, 50, "0x01 0x02 0x03", BOX_FILL_BLUE, TXT_CYAN);
+
+        // Découpage
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.fillText("découpés en 4 groupes de 6 bits", 40, 140);
+
+        const bits = ["000001", "000000", "100000", "000011"];
+        bits.forEach((b, i) => {
+            const x = 40 + i * 100;
+            boite(ctx, x, 160, 90, 40, b, BOX_FILL_ACCENT, TXT_ACCENT);
+        });
+
+        // Résultat
+        ctx.fillStyle = TXT_ACCENT;
+        ctx.fillText("chacun converti en caractère ASCII", 40, 230);
+
+        const chars = ["B", "A", "g", "D"];
+        chars.forEach((c, i) => {
+            const x = 40 + i * 100;
+            boite(ctx, x, 250, 90, 40, c, BOX_FILL_GREEN, TXT_GREEN);
+        });
+
+        ctx.fillStyle = TXT_DIM;
+        ctx.font = "italic 12px 'Consolas', monospace";
+        ctx.fillText("→ base64 : BA gD (4 caractères au lieu de 3 octets)", 500, 280);
+    }
+})();
+</script>
+
+</body>
+</html>
